@@ -1,12 +1,93 @@
 
-; You may customize this and other start-up templates; 
-; The location of this template is c:\emu8086\inc\0_com_template.txt
+; SecureVault educational byte transformation routines.
+; NASM/SASM-compatible 16-bit source.
+; This is reversible educational processing, not production cryptography.
 
-org 100h
+BITS 16
+ORG 100h
 
-; add your code here
+JMP START
 
-ret
+; ENCRYPT_BUFFER and DECRYPT_BUFFER input:
+;   DS:SI -> buffer, CX -> byte count, DL -> key byte, DH -> seed byte.
+
+ENCRYPT_BUFFER:
+	PUSH AX
+	PUSH BX
+	PUSH CX
+	PUSH SI
+
+ENCRYPT_NEXT:
+	CMP CX, 0
+	JE ENCRYPT_DONE
+	MOV AL, [SI]
+	XOR AL, DL
+	ADD AL, DH
+	ROL AL, 1
+	MOV [SI], AL
+	ADD DL, 17
+	XOR DH, 0A5H
+	INC SI
+	DEC CX
+	JMP ENCRYPT_NEXT
+
+ENCRYPT_DONE:
+	POP SI
+	POP CX
+	POP BX
+	POP AX
+	RET
+DECRYPT_BUFFER:
+	PUSH AX
+	PUSH BX
+	PUSH CX
+	PUSH SI
+
+DECRYPT_NEXT:
+	CMP CX, 0
+	JE DECRYPT_DONE
+	MOV AL, [SI]
+	ROR AL, 1
+	SUB AL, DH
+	XOR AL, DL
+	MOV [SI], AL
+	ADD DL, 17
+	XOR DH, 0A5H
+	INC SI
+	DEC CX
+	JMP DECRYPT_NEXT
+
+DECRYPT_DONE:
+	POP SI
+	POP CX
+	POP BX
+	POP AX
+	RET
+GENERATE_CHECKSUM:
+; DS:SI -> bytes, CX -> byte count, returns AX -> 16-bit checksum.
+	PUSH BX
+	PUSH DX
+	PUSH SI
+	XOR AX, AX
+
+CHECKSUM_NEXT:
+	CMP CX, 0
+	JE CHECKSUM_DONE
+	XOR BX, BX
+	MOV BL, [SI]
+	ADD AX, BX
+	ROL AX, 1
+	INC SI
+	DEC CX
+	JMP CHECKSUM_NEXT
+
+CHECKSUM_DONE:
+	POP SI
+	POP DX
+	POP BX
+	RET
+START:
+	RET
 
 
 

@@ -93,8 +93,10 @@ class CredentialCard(QFrame):
 
 class Dashboard(QWidget):
 
-    def __init__(self):
+    def __init__(self, on_lock=None):
         super().__init__()
+
+        self.on_lock = on_lock
 
         self.setWindowTitle("SecureVault")
         self.resize(1100, 700)
@@ -135,16 +137,20 @@ class Dashboard(QWidget):
         passwords_button = QPushButton("🔑   Passwords")
         security_button = QPushButton("🛡   Security")
         settings_button = QPushButton("⚙   Settings")
+        lock_button = QPushButton("🔒   Lock Vault")
 
         dashboard_button.setObjectName("activeMenu")
         passwords_button.setObjectName("menuButton")
         security_button.setObjectName("menuButton")
         settings_button.setObjectName("menuButton")
+        lock_button.setObjectName("menuButton")
+        lock_button.clicked.connect(self.lock_vault)
 
         sidebar_layout.addWidget(dashboard_button)
         sidebar_layout.addWidget(passwords_button)
         sidebar_layout.addWidget(security_button)
         sidebar_layout.addWidget(settings_button)
+        sidebar_layout.addWidget(lock_button)
 
         sidebar_layout.addStretch()
 
@@ -416,6 +422,10 @@ class Dashboard(QWidget):
         self.search_box.clear()
 
         self.load_credentials()
+
+    def lock_vault(self):
+        if self.on_lock is not None:
+            self.on_lock()
 
     # ======================================================
     # STAT CARD

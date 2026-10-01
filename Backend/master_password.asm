@@ -383,6 +383,7 @@ CHECKSUM_LOOP:
 
     ; Get character
 
+    XOR BH, BH
     MOV BL, [SI]
 
     ; Add ASCII value
