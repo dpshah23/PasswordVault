@@ -1,0 +1,113 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+Encryption.com -- emu8086 assembler version: 4.08  
+ 
+[ 01-10-2026  --  14:29:21 ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       
+[   2]        :                                       ; SecureVault educational byte transformation routines.
+[   3]        :                                       ; EMU8086-compatible 16-bit COM source.
+[   4]        :                                       ; This is reversible educational processing, not production cryptography.
+[   5]        :                                       
+[   6]        :                                       ORG 100h
+[   7]        :                                       
+[   8]    0100: EB 5E                                 JMP START
+[   9]        :                                       
+[  10]        :                                       ; ENCRYPT_BUFFER and DECRYPT_BUFFER input:
+[  11]        :                                       ;   DS:SI -> buffer, CX -> byte count, DL -> key byte, DH -> seed byte.
+[  12]        :                                       
+[  13]    0102:                                       ENCRYPT_BUFFER:
+[  14]    0102: 50                                    	PUSH AX
+[  15]    0103: 53                                    	PUSH BX
+[  16]    0104: 51                                    	PUSH CX
+[  17]    0105: 56                                    	PUSH SI
+[  18]        :                                       
+[  19]    0106:                                       ENCRYPT_NEXT:
+[  20]    0106: 83 F9 00                              	CMP CX, 0
+[  21]    0109: 74 14                                 	JE ENCRYPT_DONE
+[  22]    010B: 8A 04                                 	MOV AL, [SI]
+[  23]    010D: 32 C2                                 	XOR AL, DL
+[  24]    010F: 02 C6                                 	ADD AL, DH
+[  25]    0111: D0 C0                                 	ROL AL, 1
+[  26]    0113: 88 04                                 	MOV [SI], AL
+[  27]    0115: 80 C2 11                              	ADD DL, 17
+[  28]    0118: 80 F6 A5                              	XOR DH, 0A5H
+[  29]    011B: 46                                    	INC SI
+[  30]    011C: 49                                    	DEC CX
+[  31]    011D: EB E7                                 	JMP ENCRYPT_NEXT
+[  32]        :                                       
+[  33]    011F:                                       ENCRYPT_DONE:
+[  34]    011F: 5E                                    	POP SI
+[  35]    0120: 59                                    	POP CX
+[  36]    0121: 5B                                    	POP BX
+[  37]    0122: 58                                    	POP AX
+[  38]    0123: C3                                    	RET
+[  39]    0124:                                       DECRYPT_BUFFER:
+[  40]    0124: 50                                    	PUSH AX
+[  41]    0125: 53                                    	PUSH BX
+[  42]    0126: 51                                    	PUSH CX
+[  43]    0127: 56                                    	PUSH SI
+[  44]        :                                       
+[  45]    0128:                                       DECRYPT_NEXT:
+[  46]    0128: 83 F9 00                              	CMP CX, 0
+[  47]    012B: 74 14                                 	JE DECRYPT_DONE
+[  48]    012D: 8A 04                                 	MOV AL, [SI]
+[  49]    012F: D0 C8                                 	ROR AL, 1
+[  50]    0131: 2A C6                                 	SUB AL, DH
+[  51]    0133: 32 C2                                 	XOR AL, DL
+[  52]    0135: 88 04                                 	MOV [SI], AL
+[  53]    0137: 80 C2 11                              	ADD DL, 17
+[  54]    013A: 80 F6 A5                              	XOR DH, 0A5H
+[  55]    013D: 46                                    	INC SI
+[  56]    013E: 49                                    	DEC CX
+[  57]    013F: EB E7                                 	JMP DECRYPT_NEXT
+[  58]        :                                       
+[  59]    0141:                                       DECRYPT_DONE:
+[  60]    0141: 5E                                    	POP SI
+[  61]    0142: 59                                    	POP CX
+[  62]    0143: 5B                                    	POP BX
+[  63]    0144: 58                                    	POP AX
+[  64]    0145: C3                                    	RET
+[  65]    0146:                                       GENERATE_CHECKSUM:
+[  66]        :                                       ; DS:SI -> bytes, CX -> byte count, returns AX -> 16-bit checksum.
+[  67]    0146: 53                                    	PUSH BX
+[  68]    0147: 52                                    	PUSH DX
+[  69]    0148: 56                                    	PUSH SI
+[  70]    0149: 33 C0                                 	XOR AX, AX
+[  71]        :                                       
+[  72]    014B:                                       CHECKSUM_NEXT:
+[  73]    014B: 83 F9 00                              	CMP CX, 0
+[  74]    014E: 74 0C                                 	JE CHECKSUM_DONE
+[  75]    0150: 33 DB                                 	XOR BX, BX
+[  76]    0152: 8A 1C                                 	MOV BL, [SI]
+[  77]    0154: 03 C3                                 	ADD AX, BX
+[  78]    0156: D1 C0                                 	ROL AX, 1
+[  79]    0158: 46                                    	INC SI
+[  80]    0159: 49                                    	DEC CX
+[  81]    015A: EB EF                                 	JMP CHECKSUM_NEXT
+[  82]        :                                       
+[  83]    015C:                                       CHECKSUM_DONE:
+[  84]    015C: 5E                                    	POP SI
+[  85]    015D: 5A                                    	POP DX
+[  86]    015E: 5B                                    	POP BX
+[  87]    015F: C3                                    	RET
+[  88]    0160:                                       START:
+[  89]    0160: C3                                    	RET
+[  90]        :                                       
+[  91]        :                                       
+[  92]        :                                       
+[  93]        :                                       
+[  94]        :                                       
+[  95]        :                                       
+ 
+===================================================================================================
+ 
+
+
+
+
+===================================================================================================

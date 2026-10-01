@@ -1,0 +1,18 @@
+< THE SYMBOL TABLE >  Encryption.com  --  emu8086 assembler version: 4.08 
+===================================================================================================
+Name                     	Offset    	Size      	Type      	Segment   
+===================================================================================================
+ENCRYPT_BUFFER           	00102     	-1        	LABEL     	(NOSEG)   
+ENCRYPT_NEXT             	00106     	-1        	LABEL     	(NOSEG)   
+ENCRYPT_DONE             	0011F     	-1        	LABEL     	(NOSEG)   
+DECRYPT_BUFFER           	00124     	-1        	LABEL     	(NOSEG)   
+DECRYPT_NEXT             	00128     	-1        	LABEL     	(NOSEG)   
+DECRYPT_DONE             	00141     	-1        	LABEL     	(NOSEG)   
+GENERATE_CHECKSUM        	00146     	-1        	LABEL     	(NOSEG)   
+CHECKSUM_NEXT            	0014B     	-1        	LABEL     	(NOSEG)   
+CHECKSUM_DONE            	0015C     	-1        	LABEL     	(NOSEG)   
+START                    	00160     	-1        	LABEL     	(NOSEG)   
+===================================================================================================
+[ 01-10-2026  --  14:29:21 ] 
+< END >
+ 

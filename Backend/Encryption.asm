@@ -1,9 +1,8 @@
 
 ; SecureVault educational byte transformation routines.
-; NASM/SASM-compatible 16-bit source.
+; EMU8086-compatible 16-bit COM source.
 ; This is reversible educational processing, not production cryptography.
-
-BITS 16
+                                                             
 ORG 100h
 
 JMP START
