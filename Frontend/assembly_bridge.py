@@ -5,6 +5,7 @@ SECUREVAULT_ASSEMBLY_EXE, or place securevault.com in the Backend directory.
 """
 
 import os
+import shlex
 import subprocess
 import tempfile
 from pathlib import Path
@@ -15,6 +16,10 @@ BACKEND_DEFAULT = BASE_DIR / "Backend" / "securevault.com"
 BACKEND_CANDIDATES = (
     BASE_DIR / "Backend" / "securevault.com",
     BASE_DIR / "Backend" / "securevault.exe",
+)
+DOSBOX_CANDIDATES = (
+    Path(r"C:\Program Files (x86)\DOSBox-0.74-3\DOSBox.exe"),
+    Path(r"C:\Program Files\DOSBox-0.74-3\DOSBox.exe"),
 )
 
 
@@ -40,6 +45,12 @@ class AssemblyBridge:
                 (candidate for candidate in BACKEND_CANDIDATES if candidate.exists()),
                 BACKEND_DEFAULT,
             )
+        )
+        self.runner = os.environ.get("SECUREVAULT_RUNNER")
+        configured_dosbox = os.environ.get("SECUREVAULT_DOSBOX")
+        self.dosbox = configured_dosbox or next(
+            (str(path) for path in DOSBOX_CANDIDATES if path.exists()),
+            None,
         )
         self.timeout = timeout
 
@@ -78,15 +89,22 @@ class AssemblyBridge:
             request_path.write_text(request, encoding="ascii")
 
             try:
+                process_command = self._build_command(
+                    request_path,
+                    response_path,
+                    Path(directory),
+                )
                 result = subprocess.run(
-                    [str(self.executable), str(request_path), str(response_path)],
+                    process_command,
                     capture_output=True,
                     timeout=self.timeout,
                     check=False,
                 )
             except (OSError, subprocess.TimeoutExpired) as error:
                 raise AssemblyBackendError(
-                    "Could not communicate with the Assembly backend."
+                    "Could not communicate with the Assembly backend. "
+                    "Install DOSBox or set SECUREVAULT_DOSBOX to its "
+                    "DOSBox.exe path."
                 ) from error
 
             if result.returncode != 0:
@@ -108,6 +126,39 @@ class AssemblyBridge:
                 f"Assembly backend rejected the request: {response['status']}"
             )
         return response
+
+    def _build_command(self, request_path, response_path, temporary_directory):
+        direct_command = [
+            str(self.executable),
+            str(request_path),
+            str(response_path),
+        ]
+
+        if self.dosbox:
+            project_directory = self.executable.parent.parent
+            relative_backend = self.executable.relative_to(project_directory)
+            mount_backend = f'mount c "{project_directory}"'
+            mount_temporary = f'mount d "{temporary_directory}"'
+            run_backend = (
+                f"c:\\{relative_backend} "
+                "d:\\request.txt d:\\response.txt"
+            )
+            return [
+                self.dosbox,
+                "-c",
+                mount_backend,
+                "-c",
+                mount_temporary,
+                "-c",
+                run_backend,
+                "-c",
+                "exit",
+            ]
+
+        if self.runner:
+            return shlex.split(self.runner, posix=False) + direct_command
+
+        return direct_command
 
     @staticmethod
     def _parse_response(text):

@@ -8,15 +8,22 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QScrollArea,
     QMessageBox,
+    QApplication,
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
-from vault import get_credentials, delete_credential, search_credentials
+from vault import (
+    get_credentials,
+    delete_credential,
+    search_credentials,
+    verify_integrity,
+)
 
 
 class CredentialCard(QFrame):
     deleted = Signal(str)
+    edited = Signal(str)
 
     def __init__(self, credential):
         super().__init__()
@@ -64,6 +71,18 @@ class CredentialCard(QFrame):
         self.show_button.setFixedSize(40, 40)
         self.show_button.clicked.connect(self.toggle_password)
 
+        copy_button = QPushButton("⧉")
+        copy_button.setObjectName("iconButton")
+        copy_button.setFixedSize(40, 40)
+        copy_button.setToolTip("Copy password")
+        copy_button.clicked.connect(self.copy_password)
+
+        edit_button = QPushButton("✎")
+        edit_button.setObjectName("iconButton")
+        edit_button.setFixedSize(40, 40)
+        edit_button.setToolTip("Edit credential")
+        edit_button.clicked.connect(self.edit_clicked)
+
         # Delete
         delete_button = QPushButton("🗑")
         delete_button.setObjectName("deleteButton")
@@ -75,6 +94,8 @@ class CredentialCard(QFrame):
         layout.addStretch()
         layout.addWidget(self.password_label)
         layout.addWidget(self.show_button)
+        layout.addWidget(copy_button)
+        layout.addWidget(edit_button)
         layout.addWidget(delete_button)
 
     def toggle_password(self):
@@ -89,6 +110,12 @@ class CredentialCard(QFrame):
 
     def delete_clicked(self):
         self.deleted.emit(self.credential_id)
+
+    def copy_password(self):
+        QApplication.clipboard().setText(self.password)
+
+    def edit_clicked(self):
+        self.edited.emit(self.credential_id)
 
 
 class Dashboard(QWidget):
@@ -145,6 +172,7 @@ class Dashboard(QWidget):
         settings_button.setObjectName("menuButton")
         lock_button.setObjectName("menuButton")
         lock_button.clicked.connect(self.lock_vault)
+        security_button.clicked.connect(self.check_integrity)
 
         sidebar_layout.addWidget(dashboard_button)
         sidebar_layout.addWidget(passwords_button)
@@ -332,6 +360,9 @@ class Dashboard(QWidget):
             card.deleted.connect(
                 self.delete_credential
             )
+            card.edited.connect(
+                self.open_edit_credential
+            )
 
             self.credential_layout.addWidget(card)
 
@@ -415,6 +446,21 @@ class Dashboard(QWidget):
 
         self.add_window.show()
 
+    def open_edit_credential(self, credential_id):
+        credential = next(
+            (item for item in get_credentials() if item["id"] == credential_id),
+            None,
+        )
+        if credential is None:
+            QMessageBox.warning(self, "Edit Error", "Credential no longer exists.")
+            return
+
+        from edit_credential import EditCredentialWindow
+
+        self.edit_window = EditCredentialWindow(credential)
+        self.edit_window.credential_saved.connect(self.refresh_after_add)
+        self.edit_window.show()
+
     def refresh_after_add(self):
 
         # Clear an existing search so the newly-added
@@ -426,6 +472,16 @@ class Dashboard(QWidget):
     def lock_vault(self):
         if self.on_lock is not None:
             self.on_lock()
+
+    def check_integrity(self):
+        try:
+            verify_integrity()
+        except Exception as error:
+            self.security_card.value_label.setText("Failed")
+            QMessageBox.warning(self, "Integrity Warning", str(error))
+            return
+        self.security_card.value_label.setText("Verified")
+        QMessageBox.information(self, "Vault Integrity", "Vault integrity verified.")
 
     # ======================================================
     # STAT CARD

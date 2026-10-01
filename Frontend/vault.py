@@ -45,7 +45,7 @@ def _require_unlocked():
 
 def _read_envelope():
     initialize_vault()
-    if not VAULT_FILE.exists():
+    if not VAULT_FILE.exists() or VAULT_FILE.stat().st_size == 0:
         return None
     try:
         return json.loads(VAULT_FILE.read_text(encoding="utf-8"))
@@ -124,6 +124,20 @@ def lock_vault():
     global _unlocked_password, _credentials
     _credentials = []
     _unlocked_password = None
+
+
+def verify_integrity():
+    _require_unlocked()
+    envelope = _read_envelope()
+    if envelope is None:
+        return True
+    try:
+        encrypted = bytes.fromhex(envelope["data"])
+        checksum = str(envelope["checksum"])
+        bridge.check(_unlocked_password, encrypted, checksum)
+    except (KeyError, ValueError, TypeError, AssemblyBackendError) as error:
+        raise VaultCorruptError("Vault integrity verification failed.") from error
+    return True
 
 
 def get_credentials():

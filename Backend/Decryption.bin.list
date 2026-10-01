@@ -1,0 +1,39 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+Decryption.bin -- emu8086 assembler version: 4.08  
+ 
+[ 01-10-2026  --  14:47:20 ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       ; SecureVault educational decryption module.
+[   2]        :                                       ; The same routine is embedded in securevault.asm for the bridge build.
+[   3]        :                                       ; Input: DS:SI buffer, CX byte count, DL key byte, DH seed byte.
+[   4]        :                                       
+[   5]    0000:                                       DECRYPT_BUFFER_MODULE:
+[   6]    0000: 83 F9 00                              CMP CX, 0
+[   7]    0003: 74 14                                 JE DECRYPT_MODULE_DONE
+[   8]    0005: 8A 04                                 MOV AL, [SI]
+[   9]    0007: D0 C8                                 ROR AL, 1
+[  10]    0009: 2A C6                                 SUB AL, DH
+[  11]    000B: 32 C2                                 XOR AL, DL
+[  12]    000D: 88 04                                 MOV [SI], AL
+[  13]    000F: 80 C2 11                              ADD DL, 17
+[  14]    0012: 80 F6 A5                              XOR DH, 0A5h
+[  15]    0015: 46                                    INC SI
+[  16]    0016: 49                                    DEC CX
+[  17]    0017: EB E7                                 JMP DECRYPT_BUFFER_MODULE
+[  18]    0019:                                       DECRYPT_MODULE_DONE:
+[  19]    0019: C3                                    RET
+[  20]        :                                       
+[  21]        :                                       
+ 
+===================================================================================================
+ 
+
+
+
+
+===================================================================================================

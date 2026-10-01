@@ -23,15 +23,18 @@ checksum. CRUD operations are unavailable while the vault is locked.
 ## Setup
 
 1. Install the dependency with `pip install -r requirements.txt`.
-2. Build the DOS-compatible Assembly command program from
-   `Backend/assembly_interface.asm` and `Backend/Encryption.asm` in EMU8086.
+2. Open `Backend/securevault.asm` in EMU8086 and build it as a DOS `.COM`
+   program. It is the executable entry point; `Encryption.asm` is a reusable
+   demonstration module, while `assembly_interface.asm` documents the protocol.
 3. Place the resulting executable at `Backend/securevault.com`, or set
    `SECUREVAULT_ASSEMBLY_EXE` to its path.
 4. Run `python Frontend/main.py`.
 
-The Assembly program must accept request and response file paths and implement
-the protocol described in `Backend/assembly_interface.asm`. Python does not
-fall back to Python cryptography when the executable is missing.
+If Windows cannot launch the DOS `.COM` file directly, set
+`SECUREVAULT_RUNNER` to a small DOS-compatible launcher command and keep the
+same two request/response path arguments. The Assembly program accepts those
+paths and implements the protocol described in `Backend/assembly_interface.asm`.
+Python does not fall back to Python cryptography when the executable is missing.
 
 ## Algorithm and limitations
 

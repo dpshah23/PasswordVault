@@ -1,0 +1,42 @@
+; SecureVault educational 8086 password-generation routine.
+; Input: BX requested length (maximum 32), DL initial seed.
+; Output: DS:DI receives uppercase letters, lowercase letters, digits,
+;         and symbols selected by a deterministic educational sequence.
+; This routine is not cryptographically secure.
+
+GENERATE_PASSWORD_MODULE:
+    CMP BX, 0
+    JE GENERATOR_DONE
+    MOV AL, DL
+    XOR AL, 5Ah
+    ADD DL, 17
+    AND AL, 3
+    CMP AL, 0
+    JE GENERATOR_UPPER
+    CMP AL, 1
+    JE GENERATOR_LOWER
+    CMP AL, 2
+    JE GENERATOR_DIGIT
+    MOV AL, '!'
+    JMP GENERATOR_WRITE
+GENERATOR_UPPER:
+    MOV AL, 'A'
+    ADD AL, DL
+    AND AL, 0Fh
+    JMP GENERATOR_WRITE
+GENERATOR_LOWER:
+    MOV AL, 'a'
+    ADD AL, DL
+    AND AL, 0Fh
+    JMP GENERATOR_WRITE
+GENERATOR_DIGIT:
+    MOV AL, '0'
+    ADD AL, DL
+    AND AL, 09h
+GENERATOR_WRITE:
+    MOV [DI], AL
+    INC DI
+    DEC BX
+    JMP GENERATE_PASSWORD_MODULE
+GENERATOR_DONE:
+    RET

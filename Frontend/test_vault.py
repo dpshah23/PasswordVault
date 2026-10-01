@@ -29,6 +29,11 @@ class FakeAssemblyBridge:
             raise vault.AssemblyBackendError("Vault integrity verification failed.")
         return data
 
+    def check(self, password, data, checksum):
+        if checksum != str(len(data)):
+            raise vault.AssemblyBackendError("Vault integrity verification failed.")
+        return True
+
 
 class VaultTests(unittest.TestCase):
     def setUp(self):
@@ -67,6 +72,11 @@ class VaultTests(unittest.TestCase):
         self.assertFalse(vault.is_unlocked())
         with self.assertRaises(vault.VaultLockedError):
             vault.get_credentials()
+
+    def test_integrity_check(self):
+        vault.unlock_vault("correct-password")
+        vault.add_credential("example.com", "user", "secret")
+        self.assertTrue(vault.verify_integrity())
 
     def test_response_parser(self):
         response = AssemblyBridge._parse_response("STATUS=0\nDATA=4142\nCHECKSUM=00AF\n")

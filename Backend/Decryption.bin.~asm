@@ -1,0 +1,24 @@
+; SecureVault educational decryption module.
+; The same routine is embedded in securevault.asm for the bridge build.
+; Input: DS:SI buffer, CX byte count, DL key byte, DH seed byte.
+
+DECRYPT_BUFFER_MODULE:
+CMP CX, 0
+JE DECRYPT_MODULE_DONE
+MOV AL, [SI]
+ROR AL, 1
+SUB AL, DH
+XOR AL, DL
+MOV [SI], AL
+ADD DL, 17
+XOR DH, 0A5h
+INC SI
+DEC CX
+JMP DECRYPT_BUFFER_MODULE
+DECRYPT_MODULE_DONE:
+RET
+
+
+
+
+; [SOURCE]: D:\Nirma\Sem-5\MI\Password Vault\Backend\Decryption.asm

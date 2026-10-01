@@ -1,0 +1,23 @@
+; SecureVault educational checksum module.
+; Input: DS:SI bytes, CX byte count.
+; Output: AX 16-bit rotating additive checksum.
+
+GENERATE_CHECKSUM_MODULE:
+XOR AX, AX
+CHECKSUM_MODULE_NEXT:
+CMP CX, 0
+JE CHECKSUM_MODULE_DONE
+XOR BX, BX
+MOV BL, [SI]
+ADD AX, BX
+ROL AX, 1
+INC SI
+DEC CX
+JMP CHECKSUM_MODULE_NEXT
+CHECKSUM_MODULE_DONE:
+RET
+
+
+
+
+; [SOURCE]: D:\Nirma\Sem-5\MI\Password Vault\Backend\checksum.asm
