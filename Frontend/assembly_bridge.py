@@ -1,71 +1,190 @@
-"""Bridge between Python and the EMU8086/DOS Assembly backend.
+"""
+SecureVault - Python <-> 8086 Assembly Bridge
 
-The bridge never performs encryption itself. Configure the compiled backend with
-SECUREVAULT_ASSEMBLY_EXE, or place securevault.com in the Backend directory.
+Project structure:
+
+Password Vault/
+├── Backend/
+│   └── securevault.com
+├── Frontend/
+│   └── assembly_bridge.py
+└── data/
+    └── master.dat
+
+The Assembly backend is executed through DOSBox.
+
+Communication:
+
+Python
+    |
+    | request.txt
+    v
+DOSBox
+    |
+    | securevault.com
+    v
+response.txt
+    |
+    v
+Python
+
+The bridge does NOT perform encryption itself.
+All encryption/decryption is delegated to the Assembly backend.
 """
 
 import os
 import shlex
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+# Password Vault/
 BASE_DIR = Path(__file__).resolve().parent.parent
-BACKEND_DEFAULT = BASE_DIR / "Backend" / "securevault.com"
+
+# Password Vault/Backend/
+BACKEND_DIR = BASE_DIR / "Backend"
+
+# Password Vault/data/
+DATA_DIR = BASE_DIR / "data"
+
+# Main Assembly backend
+BACKEND_DEFAULT = BACKEND_DIR / "securevault.com"
+
+
+# Possible Assembly backend executables
 BACKEND_CANDIDATES = (
-    BASE_DIR / "Backend" / "securevault.com",
-    BASE_DIR / "Backend" / "securevault.exe",
+    BACKEND_DIR / "securevault.com",
+    BACKEND_DIR / "securevault.exe",
 )
+
+
+# Possible DOSBox installations
 DOSBOX_CANDIDATES = (
     Path(r"C:\Program Files (x86)\DOSBox-0.74-3\DOSBox.exe"),
     Path(r"C:\Program Files\DOSBox-0.74-3\DOSBox.exe"),
+    Path(r"C:\Program Files (x86)\DOSBox\DOSBox.exe"),
+    Path(r"C:\Program Files\DOSBox\DOSBox.exe"),
 )
 
 
+# ============================================================
+# EXCEPTIONS
+# ============================================================
+
 class AssemblyBackendError(RuntimeError):
-    """Base error for backend communication failures."""
+    """Base error for Assembly backend failures."""
 
 
 class AssemblyBackendUnavailable(AssemblyBackendError):
-    """Raised when the compiled EMU8086 backend cannot be started."""
+    """Raised when the Assembly backend cannot be started."""
 
 
 class AssemblyProtocolError(AssemblyBackendError):
-    """Raised when the backend returns malformed data or an error status."""
+    """Raised when Assembly returns an invalid response."""
 
+
+# ============================================================
+# ASSEMBLY BRIDGE
+# ============================================================
 
 class AssemblyBridge:
-    def __init__(self, executable=None, timeout=5):
-        configured = executable or os.environ.get("SECUREVAULT_ASSEMBLY_EXE")
-        self.executable = (
-            Path(configured)
-            if configured
-            else next(
-                (candidate for candidate in BACKEND_CANDIDATES if candidate.exists()),
+
+    def __init__(self, executable=None, timeout=10):
+
+        # ----------------------------------------------------
+        # Find Assembly executable
+        # ----------------------------------------------------
+
+        configured = executable or os.environ.get(
+            "SECUREVAULT_ASSEMBLY_EXE"
+        )
+
+        if configured:
+            self.executable = Path(configured)
+        else:
+            self.executable = next(
+                (
+                    candidate
+                    for candidate in BACKEND_CANDIDATES
+                    if candidate.exists()
+                ),
                 BACKEND_DEFAULT,
             )
+
+        # ----------------------------------------------------
+        # Optional custom runner
+        # ----------------------------------------------------
+
+        self.runner = os.environ.get(
+            "SECUREVAULT_RUNNER"
         )
-        self.runner = os.environ.get("SECUREVAULT_RUNNER")
-        configured_dosbox = os.environ.get("SECUREVAULT_DOSBOX")
-        self.dosbox = configured_dosbox or next(
-            (str(path) for path in DOSBOX_CANDIDATES if path.exists()),
-            None,
+
+        # ----------------------------------------------------
+        # Find DOSBox
+        # ----------------------------------------------------
+
+        configured_dosbox = os.environ.get(
+            "SECUREVAULT_DOSBOX"
         )
+
+        if configured_dosbox:
+
+            self.dosbox = configured_dosbox
+
+        else:
+
+            self.dosbox = next(
+                (
+                    str(path)
+                    for path in DOSBOX_CANDIDATES
+                    if path.exists()
+                ),
+                None,
+            )
+
         self.timeout = timeout
+
+    # ========================================================
+    # MASTER FILE
+    # ========================================================
 
     @property
     def master_file(self):
-        return BASE_DIR / "data" / "master.dat"
+        return DATA_DIR / "master.dat"
 
     def is_master_configured(self):
         return self.master_file.exists()
 
+    # ========================================================
+    # HEX ENCODING
+    # ========================================================
+
     @staticmethod
-    def _hex(value):
+    def _hex(value: bytes) -> str:
         return value.hex().upper()
 
-    def _request(self, command, password, data=b"", checksum=""):
+    # ========================================================
+    # REQUEST
+    # ========================================================
+
+    def _request(
+        self,
+        command,
+        password,
+        data=b"",
+        checksum="",
+    ):
+
+        # ----------------------------------------------------
+        # Build request
+        # ----------------------------------------------------
+
         request = "\r\n".join(
             [
                 command,
@@ -76,126 +195,462 @@ class AssemblyBridge:
             ]
         )
 
+        # ----------------------------------------------------
+        # Verify Assembly executable
+        # ----------------------------------------------------
+
         if not self.executable.exists():
+
             raise AssemblyBackendUnavailable(
-                "Assembly backend not found. Build the EMU8086 DOS target and "
-                "place securevault.com or securevault.exe in Backend, or set "
-                f"SECUREVAULT_ASSEMBLY_EXE. Checked: {', '.join(str(path) for path in BACKEND_CANDIDATES)}"
+                "Assembly backend not found.\n\n"
+                f"Expected:\n{self.executable}\n\n"
+                "Build securevault.com and place it in Backend."
             )
 
-        with tempfile.TemporaryDirectory(prefix="securevault-") as directory:
-            request_path = Path(directory) / "request.txt"
-            response_path = Path(directory) / "response.txt"
-            request_path.write_text(request, encoding="ascii")
+        # ----------------------------------------------------
+        # Verify DOSBox
+        # ----------------------------------------------------
+
+        if not self.dosbox:
+
+            raise AssemblyBackendUnavailable(
+                "DOSBox was not found.\n\n"
+                "Install DOSBox or set the "
+                "SECUREVAULT_DOSBOX environment variable."
+            )
+
+        # ----------------------------------------------------
+        # Temporary communication directory
+        # ----------------------------------------------------
+
+        with tempfile.TemporaryDirectory(
+            prefix="securevault_"
+        ) as directory:
+
+            temporary_directory = Path(directory)
+
+            request_path = (
+                temporary_directory / "request.txt"
+            )
+
+            response_path = (
+                temporary_directory / "response.txt"
+            )
+
+            # ------------------------------------------------
+            # Write request
+            # ------------------------------------------------
+
+            request_path.write_text(
+                request,
+                encoding="ascii",
+            )
+
+            # Make absolutely sure no stale response exists
+            if response_path.exists():
+                response_path.unlink()
+
+            # ------------------------------------------------
+            # Build DOSBox command
+            # ------------------------------------------------
+
+            process_command = self._build_command(
+                request_path,
+                response_path,
+                temporary_directory,
+            )
+
+            # Useful debugging output
+            print("\n========== SecureVault Assembly ==========")
+            print("Assembly:")
+            print(self.executable)
+
+            print("\nDOSBox:")
+            print(self.dosbox)
+
+            print("\nRequest:")
+            print(request)
+
+            print("\nDOSBox command:")
+            print(process_command)
+
+            # ------------------------------------------------
+            # Execute
+            # ------------------------------------------------
 
             try:
-                process_command = self._build_command(
-                    request_path,
-                    response_path,
-                    Path(directory),
-                )
+
                 result = subprocess.run(
                     process_command,
                     capture_output=True,
+                    text=True,
                     timeout=self.timeout,
                     check=False,
                 )
-            except (OSError, subprocess.TimeoutExpired) as error:
+
+            except subprocess.TimeoutExpired as error:
+
                 raise AssemblyBackendError(
-                    "Could not communicate with the Assembly backend. "
-                    "Install DOSBox or set SECUREVAULT_DOSBOX to its "
-                    "DOSBox.exe path."
+                    "DOSBox/Assembly backend timed out."
                 ) from error
 
-            if result.returncode != 0:
+            except OSError as error:
+
                 raise AssemblyBackendError(
-                    f"Assembly backend exited with status {result.returncode}."
-                )
+                    "Could not start DOSBox.\n\n"
+                    f"{error}"
+                ) from error
+
+            # ------------------------------------------------
+            # Debug DOSBox output
+            # ------------------------------------------------
+
+            print("\nDOSBox stdout:")
+            print(result.stdout)
+
+            print("\nDOSBox stderr:")
+            print(result.stderr)
+
+            print("\nDOSBox return code:")
+            print(result.returncode)
+
+            # ------------------------------------------------
+            # Check response
+            # ------------------------------------------------
 
             if not response_path.exists():
-                raise AssemblyProtocolError("Assembly backend returned no response.")
 
-            response = self._parse_response(response_path.read_text(encoding="ascii"))
+                raise AssemblyProtocolError(
+                    "Assembly backend returned no response.\n\n"
+                    "Expected response file:\n"
+                    f"{response_path}\n\n"
+                    f"DOSBox return code: {result.returncode}\n\n"
+                    f"DOSBox stdout:\n{result.stdout}\n\n"
+                    f"DOSBox stderr:\n{result.stderr}"
+                )
+
+            # ------------------------------------------------
+            # Read response
+            # ------------------------------------------------
+
+            try:
+
+                response_text = response_path.read_text(
+                    encoding="ascii"
+                )
+
+            except Exception as error:
+
+                raise AssemblyProtocolError(
+                    "response.txt was created but could not "
+                    "be read."
+                ) from error
+
+            print("\nAssembly response:")
+            print(response_text)
+
+            # ------------------------------------------------
+            # Parse
+            # ------------------------------------------------
+
+            response = self._parse_response(
+                response_text
+            )
+
+        # ====================================================
+        # STATUS HANDLING
+        # ====================================================
 
         if response["status"] == 2:
-            raise AssemblyProtocolError("Master password verification failed.")
-        if response["status"] == 3:
-            raise AssemblyProtocolError("Vault integrity verification failed.")
-        if response["status"] != 0:
+
             raise AssemblyProtocolError(
-                f"Assembly backend rejected the request: {response['status']}"
+                "Master password verification failed."
             )
+
+        if response["status"] == 3:
+
+            raise AssemblyProtocolError(
+                "Vault integrity verification failed."
+            )
+
+        if response["status"] == 4:
+
+            raise AssemblyProtocolError(
+                "Assembly rejected the request as malformed."
+            )
+
+        if response["status"] == 5:
+
+            raise AssemblyProtocolError(
+                "Assembly reported a file error."
+            )
+
+        if response["status"] != 0:
+
+            raise AssemblyProtocolError(
+                "Assembly backend rejected the request: "
+                f"{response['status']}"
+            )
+
         return response
 
-    def _build_command(self, request_path, response_path, temporary_directory):
-        direct_command = [
-            str(self.executable),
-            str(request_path),
-            str(response_path),
+    # ========================================================
+    # BUILD DOSBOX COMMAND
+    # ========================================================
+
+    def _build_command(
+        self,
+        request_path,
+        response_path,
+        temporary_directory,
+    ):
+
+        # ----------------------------------------------------
+        # IMPORTANT
+        #
+        # Windows project:
+        #
+        # D:\...\Password Vault\
+        #
+        # DOSBox mount:
+        #
+        # C:\
+        #
+        # Therefore:
+        #
+        # C:\BACKEND\securevault.com
+        #
+        # is the Assembly executable.
+        # ----------------------------------------------------
+
+        project_directory = self.executable.parent.parent
+
+        relative_backend = (
+            self.executable.relative_to(
+                project_directory
+            )
+        )
+
+        # Convert Windows Path to DOS-style path
+        backend_dos_path = str(
+            relative_backend
+        ).replace("/", "\\")
+
+        # ----------------------------------------------------
+        # Temporary files are mounted as D:
+        # ----------------------------------------------------
+
+        request_dos_path = r"D:\request.txt"
+        response_dos_path = r"D:\response.txt"
+
+        # ----------------------------------------------------
+        # Assembly command
+        # ----------------------------------------------------
+
+        assembly_command = (
+            f"C:\\{backend_dos_path} "
+            f"{request_dos_path} "
+            f"{response_dos_path}"
+        )
+
+        # ----------------------------------------------------
+        # DOSBox configuration
+        # ----------------------------------------------------
+
+        config_path = (
+            temporary_directory / "dosbox.conf"
+        )
+
+        config = "\n".join(
+            [
+                "[autoexec]",
+
+                # Project root -> C:
+                f'mount c "{project_directory}"',
+
+                # Temporary request/response -> D:
+                f'mount d "{temporary_directory}"',
+
+                # Go to project root
+                "c:",
+
+                # Execute Assembly
+                assembly_command,
+
+                # Exit DOSBox
+                "exit",
+
+                "",
+            ]
+        )
+
+        config_path.write_text(
+            config,
+            encoding="ascii",
+        )
+
+        print("\nGenerated DOSBox config:")
+        print(config)
+
+        # ----------------------------------------------------
+        # DOSBox execution
+        # ----------------------------------------------------
+
+        return [
+            self.dosbox,
+            "-exit",
+            "-conf",
+            str(config_path),
         ]
 
-        if self.dosbox:
-            project_directory = self.executable.parent.parent
-            relative_backend = self.executable.relative_to(project_directory)
-            mount_backend = f'mount c "{project_directory}"'
-            mount_temporary = f'mount d "{temporary_directory}"'
-            run_backend = (
-                f"c:\\{relative_backend} "
-                "d:\\request.txt d:\\response.txt"
-            )
-            return [
-                self.dosbox,
-                "-c",
-                mount_backend,
-                "-c",
-                mount_temporary,
-                "-c",
-                run_backend,
-                "-c",
-                "exit",
-            ]
-
-        if self.runner:
-            return shlex.split(self.runner, posix=False) + direct_command
-
-        return direct_command
+    # ========================================================
+    # RESPONSE PARSER
+    # ========================================================
 
     @staticmethod
     def _parse_response(text):
+
         values = {}
+
         for line in text.splitlines():
+
             if "=" not in line:
                 continue
-            key, value = line.split("=", 1)
+
+            key, value = line.split(
+                "=",
+                1,
+            )
+
             values[key.upper()] = value.strip()
 
+        # ----------------------------------------------------
+        # STATUS
+        # ----------------------------------------------------
+
         try:
-            status = int(values["STATUS"])
-            data = bytes.fromhex(values.get("DATA", ""))
-            checksum = values.get("CHECKSUM", "")
+
+            status = int(
+                values["STATUS"]
+            )
+
         except (KeyError, ValueError) as error:
-            raise AssemblyProtocolError("Malformed Assembly response.") from error
 
-        return {"status": status, "data": data, "checksum": checksum}
+            raise AssemblyProtocolError(
+                "Malformed Assembly response: "
+                "STATUS is missing or invalid."
+            ) from error
 
-    def setup_master_password(self, password):
-        return self._request("SETUP", password)
+        # ----------------------------------------------------
+        # DATA
+        # ----------------------------------------------------
 
-    def verify_master_password(self, password):
-        self._request("VERIFY", password)
+        try:
+
+            data = bytes.fromhex(
+                values.get("DATA", "")
+            )
+
+        except ValueError as error:
+
+            raise AssemblyProtocolError(
+                "Malformed Assembly response: "
+                "DATA is not valid hexadecimal."
+            ) from error
+
+        # ----------------------------------------------------
+        # CHECKSUM
+        # ----------------------------------------------------
+
+        checksum = values.get(
+            "CHECKSUM",
+            "",
+        )
+
+        return {
+            "status": status,
+            "data": data,
+            "checksum": checksum,
+        }
+
+    # ========================================================
+    # PUBLIC API
+    # ========================================================
+
+    def setup_master_password(
+        self,
+        password,
+    ):
+
+        return self._request(
+            "SETUP",
+            password,
+        )
+
+    def verify_master_password(
+        self,
+        password,
+    ):
+
+        self._request(
+            "VERIFY",
+            password,
+        )
+
         return True
 
-    def encrypt(self, password, data):
-        response = self._request("ENCRYPT", password, data)
-        return response["data"], response["checksum"]
+    def encrypt(
+        self,
+        password,
+        data,
+    ):
 
-    def decrypt(self, password, data, checksum):
-        response = self._request("DECRYPT", password, data, checksum)
+        response = self._request(
+            "ENCRYPT",
+            password,
+            data,
+        )
+
+        return (
+            response["data"],
+            response["checksum"],
+        )
+
+    def decrypt(
+        self,
+        password,
+        data,
+        checksum,
+    ):
+
+        response = self._request(
+            "DECRYPT",
+            password,
+            data,
+            checksum,
+        )
+
         return response["data"]
 
-    def check(self, password, data, checksum):
-        self._request("CHECK", password, data, checksum)
+    def check(
+        self,
+        password,
+        data,
+        checksum,
+    ):
+
+        self._request(
+            "CHECK",
+            password,
+            data,
+            checksum,
+        )
+
         return True
 
+
+# ============================================================
+# GLOBAL BRIDGE INSTANCE
+# ============================================================
 
 bridge = AssemblyBridge()
