@@ -173,6 +173,9 @@ class Dashboard(QWidget):
         lock_button.setObjectName("menuButton")
         lock_button.clicked.connect(self.lock_vault)
         security_button.clicked.connect(self.check_integrity)
+        dashboard_button.clicked.connect(self.show_all_credentials)
+        passwords_button.clicked.connect(self.show_all_credentials)
+        settings_button.clicked.connect(self.show_settings)
 
         sidebar_layout.addWidget(dashboard_button)
         sidebar_layout.addWidget(passwords_button)
@@ -465,6 +468,19 @@ class Dashboard(QWidget):
         self.search_box.clear()
 
         self.load_credentials()
+
+    def show_all_credentials(self):
+        self.search_box.clear()
+        self.load_credentials()
+
+    def show_settings(self):
+        QMessageBox.information(
+            self,
+            "SecureVault Settings",
+            "Assembly engine: DOSBox\n"
+            "Encrypted vault: data/vault.dat\n"
+            "Master verification: data/master.dat",
+        )
 
     def lock_vault(self):
         if self.on_lock is not None:

@@ -2,7 +2,7 @@ EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
  
 securevault.com -- emu8086 assembler version: 4.08  
  
-[ 02-10-2026  --  21:13:00 ] 
+[ 02-10-2026  --  22:02:45 ] 
  
 ===================================================================================================
 [LINE]     LOC: MACHINE CODE                          SOURCE
@@ -872,640 +872,643 @@ securevault.com -- emu8086 assembler version: 4.08
 [  66]    26FA: 00                                    master_missing DB 0
 [  67]        :                                       
 [  68]    26FB:                                       MAIN:
-[  69]    26FB: 8C C8                                 MOV AX, CS
-[  70]    26FD: 8E D8                                 MOV DS, AX
-[  71]    26FF: 8E C0                                 MOV ES, AX
-[  72]        :                                       
-[  73]    2701: E8 B3 00                              CALL PARSE_ARGUMENTS
-[  74]    2704: 73 03                                 JNC HAVE_ARGUMENTS
-[  75]    2706: E8 E0 00                              CALL USE_DEFAULT_ARGUMENTS
-[  76]    2709:                                       HAVE_ARGUMENTS:
-[  77]    2709: E8 26 01                              CALL READ_REQUEST
-[  78]    270C: 73 03 E9 9C 00                        JC EXIT_FILE_ERROR
-[  79]        :                                       
-[  80]    2711: E8 48 01                              CALL CLEAR_RESPONSE
-[  81]    2714: E8 4C 01                              CALL PARSE_PASSWORD
-[  82]    2717: 73 03 E9 82 00                        JC RESPONSE_INVALID
-[  83]        :                                       
-[  84]    271C: A0 45 02                              MOV AL, [request_buf]
-[  85]    271F: 3C 53                                 CMP AL, 'S'
-[  86]    2721: 74 12                                 JE COMMAND_SETUP
-[  87]    2723: 3C 56                                 CMP AL, 'V'
-[  88]    2725: 74 1E                                 JE COMMAND_VERIFY
-[  89]    2727: 3C 45                                 CMP AL, 'E'
-[  90]    2729: 74 33                                 JE COMMAND_ENCRYPT
-[  91]    272B: 3C 44                                 CMP AL, 'D'
-[  92]    272D: 74 45                                 JE COMMAND_DECRYPT
-[  93]    272F: 3C 43                                 CMP AL, 'C'
-[  94]    2731: 74 5C                                 JE COMMAND_CHECK
-[  95]    2733: EB 69                                 JMP RESPONSE_INVALID
-[  96]        :                                       
-[  97]    2735:                                       COMMAND_SETUP:
-[  98]    2735: E8 04 02                              CALL PASSWORD_CHECKSUM
-[  99]    2738: A3 8D 26                              MOV stored_checksum, AX
-[ 100]    273B: E8 B4 02                              CALL SAVE_MASTER
-[ 101]    273E: 72 6D                                 JC EXIT_FILE_ERROR
-[ 102]    2740: E8 01 03                              CALL WRITE_SUCCESS_RESPONSE
-[ 103]    2743: EB 6D                                 JMP EXIT_OK
-[ 104]        :                                       
-[ 105]    2745:                                       COMMAND_VERIFY:
-[ 106]    2745: E8 F4 01                              CALL PASSWORD_CHECKSUM
-[ 107]    2748: A3 8F 26                              MOV current_checksum, AX
-[ 108]    274B: E8 CD 02                              CALL LOAD_MASTER
-[ 109]    274E: 72 53                                 JC EXIT_AUTH_ERROR
-[ 110]    2750: A1 8F 26                              MOV AX, current_checksum
-[ 111]    2753: 3B 06 8D 26                           CMP AX, stored_checksum
-[ 112]    2757: 75 4A                                 JNE EXIT_AUTH_ERROR
-[ 113]    2759: E8 E8 02                              CALL WRITE_SUCCESS_RESPONSE
-[ 114]    275C: EB 54                                 JMP EXIT_OK
-[ 115]        :                                       
-[ 116]    275E:                                       COMMAND_ENCRYPT:
-[ 117]    275E: E8 2B 01                              CALL LOAD_DATA
-[ 118]    2761: 72 3B                                 JC RESPONSE_INVALID
-[ 119]    2763: E8 D6 01                              CALL PASSWORD_CHECKSUM
-[ 120]    2766: E8 DE 01                              CALL TRANSFORM_KEY
-[ 121]    2769: E8 E0 01                              CALL ENCRYPT_BUFFER
-[ 122]    276C: E8 32 03                              CALL BUILD_DATA_RESPONSE
-[ 123]    276F: E8 07 03                              CALL WRITE_RESPONSE
-[ 124]    2772: EB 3E                                 JMP EXIT_OK
-[ 125]        :                                       
-[ 126]    2774:                                       COMMAND_DECRYPT:
-[ 127]    2774: E8 15 01                              CALL LOAD_DATA
-[ 128]    2777: 72 25                                 JC RESPONSE_INVALID
-[ 129]    2779: E8 C0 01                              CALL PASSWORD_CHECKSUM
-[ 130]    277C: E8 23 02                              CALL VERIFY_DATA_CHECKSUM
-[ 131]    277F: 72 27                                 JC EXIT_CHECK_ERROR
-[ 132]    2781: E8 C3 01                              CALL TRANSFORM_KEY
-[ 133]    2784: E8 E6 01                              CALL DECRYPT_BUFFER
-[ 134]    2787: E8 17 03                              CALL BUILD_DATA_RESPONSE
-[ 135]    278A: E8 EC 02                              CALL WRITE_RESPONSE
-[ 136]    278D: EB 23                                 JMP EXIT_OK
-[ 137]        :                                       
-[ 138]    278F:                                       COMMAND_CHECK:
-[ 139]    278F: E8 FA 00                              CALL LOAD_DATA
-[ 140]    2792: 72 0A                                 JC RESPONSE_INVALID
-[ 141]    2794: E8 0B 02                              CALL VERIFY_DATA_CHECKSUM
-[ 142]    2797: 72 0F                                 JC EXIT_CHECK_ERROR
-[ 143]    2799: E8 A8 02                              CALL WRITE_SUCCESS_RESPONSE
-[ 144]    279C: EB 14                                 JMP EXIT_OK
-[ 145]        :                                       
-[ 146]    279E:                                       RESPONSE_INVALID:
-[ 147]    279E: E8 C4 02                              CALL WRITE_STATUS_DATA_ERROR
-[ 148]    27A1: EB 0F                                 JMP EXIT_OK
-[ 149]        :                                       
-[ 150]    27A3:                                       EXIT_AUTH_ERROR:
-[ 151]    27A3: E8 A9 02                              CALL WRITE_STATUS_AUTH
-[ 152]    27A6: EB 0A                                 JMP EXIT_OK
-[ 153]        :                                       
-[ 154]    27A8:                                       EXIT_CHECK_ERROR:
-[ 155]    27A8: E8 AF 02                              CALL WRITE_STATUS_CHECK
-[ 156]    27AB: EB 05                                 JMP EXIT_OK
-[ 157]        :                                       
-[ 158]    27AD:                                       EXIT_FILE_ERROR:
-[ 159]    27AD: E8 C0 02                              CALL WRITE_STATUS_FILE
-[ 160]    27B0: EB 00                                 JMP EXIT_OK
-[ 161]        :                                       
-[ 162]    27B2:                                       EXIT_OK:
-[ 163]    27B2: B8 00 4C                              MOV AX, 4C00h
-[ 164]    27B5: CD 21                                 INT 21h
-[ 165]        :                                       
-[ 166]        :                                       ; Parse PSP command tail into request_path and response_path.
-[ 167]    27B7:                                       PARSE_ARGUMENTS:
-[ 168]    27B7: BE 81 00                              MOV SI, 81h
-[ 169]    27BA: 8A 0E 80 00                           MOV CL, [80h]
-[ 170]    27BE: 32 ED                                 XOR CH, CH
-[ 171]    27C0: 83 F9 01                              CMP CX, 1
-[ 172]    27C3: 72 22                                 JB PARSE_ARGUMENTS_FAIL
-[ 173]    27C5: E8 3F 00                              CALL SKIP_SPACES
-[ 174]    27C8: BF 03 01                              LEA DI, request_path
-[ 175]    27CB: E8 48 00                              CALL COPY_ARGUMENT
-[ 176]    27CE: E8 36 00                              CALL SKIP_SPACES
-[ 177]    27D1: BF 83 01                              LEA DI, response_path
-[ 178]    27D4: E8 3F 00                              CALL COPY_ARGUMENT
-[ 179]    27D7: 80 3E 03 01 00                        CMP BYTE PTR [request_path], 0
-[ 180]    27DC: 74 09                                 JE PARSE_ARGUMENTS_FAIL
-[ 181]    27DE: 80 3E 83 01 00                        CMP BYTE PTR [response_path], 0
-[ 182]    27E3: 74 02                                 JE PARSE_ARGUMENTS_FAIL
-[ 183]    27E5: F8                                    CLC
-[ 184]    27E6: C3                                    RET
-[ 185]    27E7:                                       PARSE_ARGUMENTS_FAIL:
-[ 186]    27E7: F9                                    STC
-[ 187]    27E8: C3                                    RET
-[ 188]        :                                       
-[ 189]    27E9:                                       USE_DEFAULT_ARGUMENTS:
-[ 190]    27E9: BE 16 02                              LEA SI, default_request_path
-[ 191]    27EC: BF 03 01                              LEA DI, request_path
-[ 192]    27EF: E8 0A 00                              CALL COPY_STRING
-[ 193]    27F2: BE 2D 02                              LEA SI, default_response_path
-[ 194]    27F5: BF 83 01                              LEA DI, response_path
-[ 195]    27F8: E8 01 00                              CALL COPY_STRING
-[ 196]    27FB: C3                                    RET
-[ 197]        :                                       
-[ 198]    27FC:                                       COPY_STRING:
-[ 199]    27FC: 8A 04                                 MOV AL, [SI]
-[ 200]    27FE: 88 05                                 MOV [DI], AL
-[ 201]    2800: 46                                    INC SI
-[ 202]    2801: 47                                    INC DI
-[ 203]    2802: 3C 00                                 CMP AL, 0
-[ 204]    2804: 75 F6                                 JNE COPY_STRING
-[ 205]    2806: C3                                    RET
-[ 206]        :                                       
-[ 207]    2807:                                       SKIP_SPACES:
-[ 208]    2807: 83 F9 00                              CMP CX, 0
-[ 209]    280A: 74 09                                 JE SKIP_SPACES_DONE
-[ 210]    280C: 80 3C 20                              CMP BYTE PTR [SI], ' '
-[ 211]    280F: 75 04                                 JNE SKIP_SPACES_DONE
-[ 212]    2811: 46                                    INC SI
-[ 213]    2812: 49                                    DEC CX
-[ 214]    2813: EB F2                                 JMP SKIP_SPACES
-[ 215]    2815:                                       SKIP_SPACES_DONE:
-[ 216]    2815: C3                                    RET
-[ 217]        :                                       
-[ 218]    2816:                                       COPY_ARGUMENT:
-[ 219]    2816: 83 F9 00                              CMP CX, 0
-[ 220]    2819: 74 13                                 JE COPY_ARGUMENT_DONE
-[ 221]    281B: 80 3C 20                              CMP BYTE PTR [SI], ' '
-[ 222]    281E: 74 0E                                 JE COPY_ARGUMENT_DONE
-[ 223]    2820: 80 3C 0D                              CMP BYTE PTR [SI], 13
-[ 224]    2823: 74 09                                 JE COPY_ARGUMENT_DONE
-[ 225]    2825: 8A 04                                 MOV AL, [SI]
-[ 226]    2827: 88 05                                 MOV [DI], AL
-[ 227]    2829: 46                                    INC SI
-[ 228]    282A: 47                                    INC DI
-[ 229]    282B: 49                                    DEC CX
-[ 230]    282C: EB E8                                 JMP COPY_ARGUMENT
-[ 231]    282E:                                       COPY_ARGUMENT_DONE:
-[ 232]    282E: C6 05 00                              MOV BYTE PTR [DI], 0
-[ 233]    2831: C3                                    RET
-[ 234]        :                                       
-[ 235]    2832:                                       READ_REQUEST:
-[ 236]    2832: BA 03 01                              MOV DX, OFFSET request_path
-[ 237]    2835: B8 00 3D                              MOV AX, 3D00h
-[ 238]    2838: CD 21                                 INT 21h
-[ 239]    283A: 72 1E                                 JC READ_REQUEST_FAIL
-[ 240]    283C: A3 91 26                              MOV request_handle, AX
-[ 241]    283F: 8B D8                                 MOV BX, AX
-[ 242]    2841: B9 FF 0F                              MOV CX, REQUEST_SIZE-1
-[ 243]    2844: BA 45 02                              MOV DX, OFFSET request_buf
-[ 244]    2847: B4 3F                                 MOV AH, 3Fh
-[ 245]    2849: CD 21                                 INT 21h
-[ 246]    284B: 72 09                                 JC READ_REQUEST_CLOSE_FAIL
-[ 247]    284D: A3 85 26                              MOV request_length, AX
-[ 248]    2850: B4 3E                                 MOV AH, 3Eh
-[ 249]    2852: CD 21                                 INT 21h
-[ 250]    2854: F8                                    CLC
-[ 251]    2855: C3                                    RET
-[ 252]    2856:                                       READ_REQUEST_CLOSE_FAIL:
-[ 253]    2856: B4 3E                                 MOV AH, 3Eh
-[ 254]    2858: CD 21                                 INT 21h
-[ 255]    285A:                                       READ_REQUEST_FAIL:
-[ 256]    285A: F9                                    STC
-[ 257]    285B: C3                                    RET
-[ 258]        :                                       
-[ 259]    285C:                                       CLEAR_RESPONSE:
-[ 260]    285C: C7 06 87 26 00 00                     MOV response_length, 0
-[ 261]    2862: C3                                    RET
-[ 262]        :                                       
-[ 263]        :                                       ; Locate PASSWORD= and decode the following hex bytes.
-[ 264]    2863:                                       PARSE_PASSWORD:
-[ 265]    2863: BE 45 02                              MOV SI, OFFSET request_buf
-[ 266]    2866: B9 00 10                              MOV CX, REQUEST_SIZE
-[ 267]    2869: BF E3 26                              LEA DI, password_field
-[ 268]    286C: BB 09 00                              MOV BX, 9
-[ 269]    286F: E8 43 00                              CALL FIND_FIELD
-[ 270]    2872: 72 16                                 JC PARSE_PASSWORD_FAIL
-[ 271]    2874: 8B F2                                 MOV SI, DX
-[ 272]    2876: BF 45 26                              LEA DI, password_buf
-[ 273]    2879: C7 06 95 26 40 00                     MOV decode_limit, 64
-[ 274]    287F: E8 62 00                              CALL DECODE_HEX_LINE
-[ 275]    2882: 72 06                                 JC PARSE_PASSWORD_FAIL
-[ 276]    2884: 89 1E 8B 26                           MOV password_length, BX
-[ 277]    2888: F8                                    CLC
-[ 278]    2889: C3                                    RET
-[ 279]    288A:                                       PARSE_PASSWORD_FAIL:
-[ 280]    288A: F9                                    STC
-[ 281]    288B: C3                                    RET
-[ 282]        :                                       
-[ 283]        :                                       ; Locate DATA= and decode the following hex bytes.
-[ 284]    288C:                                       LOAD_DATA:
-[ 285]    288C: BE 45 02                              MOV SI, OFFSET request_buf
-[ 286]    288F: B9 00 10                              MOV CX, REQUEST_SIZE
-[ 287]    2892: BF EC 26                              LEA DI, data_field
-[ 288]    2895: BB 05 00                              MOV BX, 5
-[ 289]    2898: E8 1A 00                              CALL FIND_FIELD
-[ 290]    289B: 72 16                                 JC LOAD_DATA_FAIL
-[ 291]    289D: 8B F2                                 MOV SI, DX
-[ 292]    289F: BF 45 22                              LEA DI, data_buf
-[ 293]    28A2: C7 06 95 26 00 04                     MOV decode_limit, DATA_SIZE
-[ 294]    28A8: E8 39 00                              CALL DECODE_HEX_LINE
-[ 295]    28AB: 72 06                                 JC LOAD_DATA_FAIL
-[ 296]    28AD: 89 1E 89 26                           MOV data_length, BX
-[ 297]    28B1: F8                                    CLC
-[ 298]    28B2: C3                                    RET
-[ 299]    28B3:                                       LOAD_DATA_FAIL:
-[ 300]    28B3: F9                                    STC
-[ 301]    28B4: C3                                    RET
-[ 302]        :                                       
-[ 303]        :                                       ; Find a field and return DX at its value.
-[ 304]    28B5:                                       FIND_FIELD:
-[ 305]    28B5: 50                                    PUSH AX
-[ 306]    28B6: 53                                    PUSH BX
-[ 307]    28B7: 51                                    PUSH CX
-[ 308]    28B8: 56                                    PUSH SI
-[ 309]    28B9:                                       FIND_FIELD_NEXT:
-[ 310]    28B9: 83 F9 00                              CMP CX, 0
-[ 311]    28BC: 74 20                                 JE FIND_FIELD_NOT_FOUND
-[ 312]    28BE: 8A 04                                 MOV AL, [SI]
-[ 313]    28C0: 3A 05                                 CMP AL, [DI]
-[ 314]    28C2: 75 0C                                 JNE FIND_FIELD_ADVANCE
-[ 315]    28C4: 56                                    PUSH SI
-[ 316]    28C5: 57                                    PUSH DI
-[ 317]    28C6: 51                                    PUSH CX
-[ 318]    28C7: 8B CB                                 MOV CX, BX
-[ 319]    28C9: F3 A6                                 REPE CMPSB
-[ 320]    28CB: 59                                    POP CX
-[ 321]    28CC: 5F                                    POP DI
-[ 322]    28CD: 5E                                    POP SI
-[ 323]    28CE: 74 04                                 JE FIND_FIELD_FOUND
-[ 324]    28D0:                                       FIND_FIELD_ADVANCE:
-[ 325]    28D0: 46                                    INC SI
-[ 326]    28D1: 49                                    DEC CX
-[ 327]    28D2: EB E5                                 JMP FIND_FIELD_NEXT
-[ 328]    28D4:                                       FIND_FIELD_FOUND:
-[ 329]    28D4: 8B D6                                 MOV DX, SI
-[ 330]    28D6: 03 D3                                 ADD DX, BX
-[ 331]    28D8: 5E                                    POP SI
-[ 332]    28D9: 59                                    POP CX
-[ 333]    28DA: 5B                                    POP BX
-[ 334]    28DB: 58                                    POP AX
-[ 335]    28DC: F8                                    CLC
-[ 336]    28DD: C3                                    RET
-[ 337]    28DE:                                       FIND_FIELD_NOT_FOUND:
-[ 338]    28DE: 5E                                    POP SI
-[ 339]    28DF: 59                                    POP CX
-[ 340]    28E0: 5B                                    POP BX
-[ 341]    28E1: 58                                    POP AX
-[ 342]    28E2: F9                                    STC
-[ 343]    28E3: C3                                    RET
-[ 344]        :                                       
-[ 345]        :                                       ; Decode uppercase/lowercase hexadecimal until CR/LF.
-[ 346]        :                                       ; DS:SI source, DS:DI destination, returns BX byte count.
-[ 347]    28E4:                                       DECODE_HEX_LINE:
-[ 348]    28E4: 33 DB                                 XOR BX, BX
-[ 349]    28E6:                                       DECODE_NEXT:
-[ 350]    28E6: 8A 04                                 MOV AL, [SI]
-[ 351]    28E8: 3C 0D                                 CMP AL, 13
-[ 352]    28EA: 74 30                                 JE DECODE_DONE
-[ 353]    28EC: 3C 0A                                 CMP AL, 10
-[ 354]    28EE: 74 2C                                 JE DECODE_DONE
-[ 355]    28F0: 3C 00                                 CMP AL, 0
-[ 356]    28F2: 74 28                                 JE DECODE_DONE
-[ 357]    28F4: E8 29 00                              CALL HEX_VALUE
-[ 358]    28F7: 72 25                                 JC DECODE_FAIL
-[ 359]    28F9: 8A D0                                 MOV DL, AL
-[ 360]    28FB: 46                                    INC SI
-[ 361]    28FC: 8A 04                                 MOV AL, [SI]
-[ 362]    28FE: E8 1F 00                              CALL HEX_VALUE
-[ 363]    2901: 72 1B                                 JC DECODE_FAIL
-[ 364]    2903: 8A F0                                 MOV DH, AL
-[ 365]    2905: 3B 1E 95 26                           CMP BX, decode_limit
-[ 366]    2909: 73 13                                 JAE DECODE_FAIL
-[ 367]    290B: D0 E2                                 SHL DL, 1
-[ 368]    290D: D0 E2                                 SHL DL, 1
-[ 369]    290F: D0 E2                                 SHL DL, 1
-[ 370]    2911: D0 E2                                 SHL DL, 1
-[ 371]    2913: 0A D6                                 OR DL, DH
-[ 372]    2915: 88 15                                 MOV [DI], DL
-[ 373]    2917: 47                                    INC DI
-[ 374]    2918: 46                                    INC SI
-[ 375]    2919: 43                                    INC BX
-[ 376]    291A: EB CA                                 JMP DECODE_NEXT
-[ 377]    291C:                                       DECODE_DONE:
-[ 378]    291C: F8                                    CLC
-[ 379]    291D: C3                                    RET
-[ 380]    291E:                                       DECODE_FAIL:
-[ 381]    291E: F9                                    STC
-[ 382]    291F: C3                                    RET
-[ 383]        :                                       
-[ 384]    2920:                                       HEX_VALUE:
-[ 385]    2920: 3C 30                                 CMP AL, '0'
-[ 386]    2922: 72 16                                 JB HEX_FAIL
-[ 387]    2924: 3C 39                                 CMP AL, '9'
-[ 388]    2926: 76 0E                                 JBE HEX_DIGIT
-[ 389]    2928: 24 DF                                 AND AL, 0DFh
-[ 390]    292A: 3C 41                                 CMP AL, 'A'
-[ 391]    292C: 72 0C                                 JB HEX_FAIL
-[ 392]    292E: 3C 46                                 CMP AL, 'F'
-[ 393]    2930: 77 08                                 JA HEX_FAIL
-[ 394]    2932: 2C 37                                 SUB AL, 'A'-10
-[ 395]    2934: F8                                    CLC
-[ 396]    2935: C3                                    RET
-[ 397]    2936:                                       HEX_DIGIT:
-[ 398]    2936: 2C 30                                 SUB AL, '0'
-[ 399]    2938: F8                                    CLC
-[ 400]    2939: C3                                    RET
-[ 401]    293A:                                       HEX_FAIL:
-[ 402]    293A: F9                                    STC
-[ 403]    293B: C3                                    RET
-[ 404]        :                                       
-[ 405]    293C:                                       PASSWORD_CHECKSUM:
-[ 406]    293C: BE 45 26                              MOV SI, OFFSET password_buf
-[ 407]    293F: 8B 0E 8B 26                           MOV CX, password_length
-[ 408]    2943: E8 48 00                              CALL GENERATE_CHECKSUM
-[ 409]    2946: C3                                    RET
-[ 410]        :                                       
-[ 411]    2947:                                       TRANSFORM_KEY:
-[ 412]    2947: 8A D0                                 MOV DL, AL
-[ 413]    2949: 8A F4                                 MOV DH, AH
-[ 414]    294B: C3                                    RET
-[ 415]        :                                       
-[ 416]    294C:                                       ENCRYPT_BUFFER:
-[ 417]    294C: BE 45 22                              MOV SI, OFFSET data_buf
-[ 418]    294F: 8B 0E 89 26                           MOV CX, data_length
-[ 419]    2953:                                       ENCRYPT_NEXT:
-[ 420]    2953: 83 F9 00                              CMP CX, 0
-[ 421]    2956: 74 14                                 JE ENCRYPT_DONE
-[ 422]    2958: 8A 04                                 MOV AL, [SI]
-[ 423]    295A: 32 C2                                 XOR AL, DL
-[ 424]    295C: 02 C6                                 ADD AL, DH
-[ 425]    295E: D0 C0                                 ROL AL, 1
-[ 426]    2960: 88 04                                 MOV [SI], AL
-[ 427]    2962: 80 C2 11                              ADD DL, 17
-[ 428]    2965: 80 F6 A5                              XOR DH, 0A5h
-[ 429]    2968: 46                                    INC SI
-[ 430]    2969: 49                                    DEC CX
-[ 431]    296A: EB E7                                 JMP ENCRYPT_NEXT
-[ 432]    296C:                                       ENCRYPT_DONE:
-[ 433]    296C: C3                                    RET
-[ 434]        :                                       
-[ 435]    296D:                                       DECRYPT_BUFFER:
-[ 436]    296D: BE 45 22                              MOV SI, OFFSET data_buf
-[ 437]    2970: 8B 0E 89 26                           MOV CX, data_length
-[ 438]    2974:                                       DECRYPT_NEXT:
-[ 439]    2974: 83 F9 00                              CMP CX, 0
-[ 440]    2977: 74 14                                 JE DECRYPT_DONE
-[ 441]    2979: 8A 04                                 MOV AL, [SI]
-[ 442]    297B: D0 C8                                 ROR AL, 1
-[ 443]    297D: 2A C6                                 SUB AL, DH
-[ 444]    297F: 32 C2                                 XOR AL, DL
-[ 445]    2981: 88 04                                 MOV [SI], AL
-[ 446]    2983: 80 C2 11                              ADD DL, 17
-[ 447]    2986: 80 F6 A5                              XOR DH, 0A5h
-[ 448]    2989: 46                                    INC SI
-[ 449]    298A: 49                                    DEC CX
-[ 450]    298B: EB E7                                 JMP DECRYPT_NEXT
-[ 451]    298D:                                       DECRYPT_DONE:
-[ 452]    298D: C3                                    RET
-[ 453]        :                                       
-[ 454]    298E:                                       GENERATE_CHECKSUM:
-[ 455]    298E: 33 C0                                 XOR AX, AX
-[ 456]    2990:                                       CHECKSUM_NEXT:
-[ 457]    2990: 83 F9 00                              CMP CX, 0
-[ 458]    2993: 74 0C                                 JE CHECKSUM_DONE
-[ 459]    2995: 33 DB                                 XOR BX, BX
-[ 460]    2997: 8A 1C                                 MOV BL, [SI]
-[ 461]    2999: 03 C3                                 ADD AX, BX
-[ 462]    299B: D1 C0                                 ROL AX, 1
-[ 463]    299D: 46                                    INC SI
-[ 464]    299E: 49                                    DEC CX
-[ 465]    299F: EB EF                                 JMP CHECKSUM_NEXT
-[ 466]    29A1:                                       CHECKSUM_DONE:
-[ 467]    29A1: C3                                    RET
-[ 468]        :                                       
-[ 469]    29A2:                                       VERIFY_DATA_CHECKSUM:
-[ 470]    29A2: BE 45 22                              MOV SI, OFFSET data_buf
-[ 471]    29A5: 8B 0E 89 26                           MOV CX, data_length
-[ 472]    29A9: E8 E2 FF                              CALL GENERATE_CHECKSUM
-[ 473]    29AC: A3 8F 26                              MOV current_checksum, AX
-[ 474]    29AF: BE 45 02                              MOV SI, OFFSET request_buf
-[ 475]    29B2: B9 00 10                              MOV CX, REQUEST_SIZE
-[ 476]    29B5: BF F1 26                              LEA DI, checksum_field
-[ 477]    29B8: BB 09 00                              MOV BX, 9
-[ 478]    29BB: E8 F7 FE                              CALL FIND_FIELD
-[ 479]    29BE: 72 0D                                 JC VERIFY_DATA_FAIL
-[ 480]    29C0: 8B F2                                 MOV SI, DX
-[ 481]    29C2: E8 0A 00                              CALL READ_HEX_WORD
-[ 482]    29C5: 3B 06 8F 26                           CMP AX, current_checksum
-[ 483]    29C9: 75 02                                 JNE VERIFY_DATA_FAIL
-[ 484]    29CB: F8                                    CLC
-[ 485]    29CC: C3                                    RET
-[ 486]    29CD:                                       VERIFY_DATA_FAIL:
-[ 487]    29CD: F9                                    STC
-[ 488]    29CE: C3                                    RET
-[ 489]        :                                       
-[ 490]    29CF:                                       READ_HEX_WORD:
-[ 491]    29CF: 33 DB                                 XOR BX, BX
-[ 492]    29D1: B9 04 00                              MOV CX, 4
-[ 493]    29D4:                                       READ_HEX_WORD_NEXT:
-[ 494]    29D4: D1 E3                                 SHL BX, 1
-[ 495]    29D6: D1 E3                                 SHL BX, 1
-[ 496]    29D8: D1 E3                                 SHL BX, 1
-[ 497]    29DA: D1 E3                                 SHL BX, 1
-[ 498]    29DC: 8A 04                                 MOV AL, [SI]
-[ 499]    29DE: E8 3F FF                              CALL HEX_VALUE
-[ 500]    29E1: 72 0B                                 JC READ_HEX_WORD_FAIL
-[ 501]    29E3: 32 E4                                 XOR AH, AH
-[ 502]    29E5: 0A D8                                 OR BL, AL
-[ 503]    29E7: 46                                    INC SI
-[ 504]    29E8: E2 EA                                 LOOP READ_HEX_WORD_NEXT
-[ 505]    29EA: 8B C3                                 MOV AX, BX
-[ 506]    29EC: F8                                    CLC
-[ 507]    29ED: C3                                    RET
-[ 508]    29EE:                                       READ_HEX_WORD_FAIL:
-[ 509]    29EE: 33 C0                                 XOR AX, AX
-[ 510]    29F0: F9                                    STC
-[ 511]    29F1: C3                                    RET
-[ 512]        :                                       
-[ 513]    29F2:                                       SAVE_MASTER:
-[ 514]    29F2: BA 03 02                              MOV DX, OFFSET master_path
-[ 515]    29F5: B9 00 00                              MOV CX, 0
-[ 516]    29F8: B4 3C                                 MOV AH, 3Ch
-[ 517]    29FA: CD 21                                 INT 21h
-[ 518]    29FC: 72 1B                                 JC SAVE_MASTER_FAIL
-[ 519]    29FE: 8B D8                                 MOV BX, AX
-[ 520]    2A00: A1 8D 26                              MOV AX, stored_checksum
-[ 521]    2A03: BA 8D 26                              MOV DX, OFFSET stored_checksum
-[ 522]    2A06: B9 02 00                              MOV CX, 2
-[ 523]    2A09: B4 40                                 MOV AH, 40h
-[ 524]    2A0B: CD 21                                 INT 21h
-[ 525]    2A0D: 72 06                                 JC SAVE_MASTER_CLOSE_FAIL
-[ 526]    2A0F: B4 3E                                 MOV AH, 3Eh
-[ 527]    2A11: CD 21                                 INT 21h
-[ 528]    2A13: F8                                    CLC
-[ 529]    2A14: C3                                    RET
-[ 530]    2A15:                                       SAVE_MASTER_CLOSE_FAIL:
-[ 531]    2A15: B4 3E                                 MOV AH, 3Eh
-[ 532]    2A17: CD 21                                 INT 21h
-[ 533]    2A19:                                       SAVE_MASTER_FAIL:
-[ 534]    2A19: F9                                    STC
-[ 535]    2A1A: C3                                    RET
-[ 536]        :                                       
-[ 537]    2A1B:                                       LOAD_MASTER:
-[ 538]    2A1B: BA 03 02                              MOV DX, OFFSET master_path
-[ 539]    2A1E: B8 00 3D                              MOV AX, 3D00h
-[ 540]    2A21: CD 21                                 INT 21h
-[ 541]    2A23: 72 1D                                 JC LOAD_MASTER_FAIL
-[ 542]    2A25: 8B D8                                 MOV BX, AX
-[ 543]    2A27: B9 02 00                              MOV CX, 2
-[ 544]    2A2A: BA 8D 26                              MOV DX, OFFSET stored_checksum
-[ 545]    2A2D: B4 3F                                 MOV AH, 3Fh
-[ 546]    2A2F: CD 21                                 INT 21h
-[ 547]    2A31: 72 0B                                 JC LOAD_MASTER_CLOSE_FAIL
-[ 548]    2A33: 3D 02 00                              CMP AX, 2
-[ 549]    2A36: 75 06                                 JNE LOAD_MASTER_CLOSE_FAIL
-[ 550]    2A38: B4 3E                                 MOV AH, 3Eh
-[ 551]    2A3A: CD 21                                 INT 21h
-[ 552]    2A3C: F8                                    CLC
-[ 553]    2A3D: C3                                    RET
-[ 554]    2A3E:                                       LOAD_MASTER_CLOSE_FAIL:
-[ 555]    2A3E: B4 3E                                 MOV AH, 3Eh
-[ 556]    2A40: CD 21                                 INT 21h
-[ 557]    2A42:                                       LOAD_MASTER_FAIL:
-[ 558]    2A42: F9                                    STC
-[ 559]    2A43: C3                                    RET
-[ 560]        :                                       
-[ 561]    2A44:                                       WRITE_SUCCESS_RESPONSE:
-[ 562]    2A44: BE 97 26                              MOV SI, OFFSET status_text
-[ 563]    2A47: B9 0A 00                              MOV CX, status_text_len
-[ 564]    2A4A: E8 AA 00                              CALL APPEND_BYTES
-[ 565]    2A4D: EB 2A                                 JMP WRITE_RESPONSE
-[ 566]        :                                       
-[ 567]    2A4F:                                       WRITE_STATUS_AUTH:
-[ 568]    2A4F: BE AB 26                              MOV SI, OFFSET status_auth
-[ 569]    2A52: B9 0A 00                              MOV CX, status_auth_len
-[ 570]    2A55: E8 9F 00                              CALL APPEND_BYTES
-[ 571]    2A58: EB 1F                                 JMP WRITE_RESPONSE
-[ 572]        :                                       
-[ 573]    2A5A:                                       WRITE_STATUS_CHECK:
-[ 574]    2A5A: BE B5 26                              MOV SI, OFFSET status_check
-[ 575]    2A5D: B9 0A 00                              MOV CX, status_check_len
-[ 576]    2A60: E8 94 00                              CALL APPEND_BYTES
-[ 577]    2A63: EB 14                                 JMP WRITE_RESPONSE
-[ 578]        :                                       
-[ 579]    2A65:                                       WRITE_STATUS_DATA_ERROR:
-[ 580]    2A65: BE BF 26                              MOV SI, OFFSET status_data
-[ 581]    2A68: B9 0A 00                              MOV CX, status_data_len
-[ 582]    2A6B: E8 89 00                              CALL APPEND_BYTES
-[ 583]    2A6E: EB 09                                 JMP WRITE_RESPONSE
-[ 584]        :                                       
-[ 585]    2A70:                                       WRITE_STATUS_FILE:
-[ 586]    2A70: BE C9 26                              MOV SI, OFFSET status_file
-[ 587]    2A73: B9 0A 00                              MOV CX, status_file_len
-[ 588]    2A76: E8 7E 00                              CALL APPEND_BYTES
-[ 589]        :                                       
-[ 590]    2A79:                                       WRITE_RESPONSE:
-[ 591]    2A79: BA 83 01                              MOV DX, OFFSET response_path
-[ 592]    2A7C: B9 00 00                              MOV CX, 0
-[ 593]    2A7F: B4 3C                                 MOV AH, 3Ch
-[ 594]    2A81: CD 21                                 INT 21h
-[ 595]    2A83: 72 1B                                 JC WRITE_RESPONSE_FAIL
-[ 596]    2A85: A3 93 26                              MOV response_handle, AX
-[ 597]    2A88: 8B D8                                 MOV BX, AX
-[ 598]    2A8A: 8B 0E 87 26                           MOV CX, response_length
-[ 599]    2A8E: BA 45 12                              MOV DX, OFFSET response_buf
-[ 600]    2A91: B4 40                                 MOV AH, 40h
-[ 601]    2A93: CD 21                                 INT 21h
-[ 602]    2A95: 72 05                                 JC WRITE_RESPONSE_CLOSE
-[ 603]    2A97: B4 3E                                 MOV AH, 3Eh
-[ 604]    2A99: CD 21                                 INT 21h
-[ 605]    2A9B: C3                                    RET
-[ 606]    2A9C:                                       WRITE_RESPONSE_CLOSE:
-[ 607]    2A9C: B4 3E                                 MOV AH, 3Eh
-[ 608]    2A9E: CD 21                                 INT 21h
-[ 609]    2AA0:                                       WRITE_RESPONSE_FAIL:
-[ 610]    2AA0: C3                                    RET
-[ 611]        :                                       
-[ 612]    2AA1:                                       BUILD_DATA_RESPONSE:
-[ 613]    2AA1: C7 06 87 26 00 00                     MOV response_length, 0
-[ 614]    2AA7: BE 97 26                              MOV SI, OFFSET status_text
-[ 615]    2AAA: B9 0A 00                              MOV CX, status_text_len
-[ 616]    2AAD: E8 47 00                              CALL APPEND_BYTES
-[ 617]    2AB0: BE D3 26                              MOV SI, OFFSET data_label
-[ 618]    2AB3: B9 05 00                              MOV CX, data_label_len
-[ 619]    2AB6: E8 3E 00                              CALL APPEND_BYTES
-[ 620]    2AB9: BE 45 22                              MOV SI, OFFSET data_buf
-[ 621]    2ABC: 8B 0E 89 26                           MOV CX, data_length
-[ 622]    2AC0:                                       BUILD_DATA_NEXT:
-[ 623]    2AC0: 83 F9 00                              CMP CX, 0
-[ 624]    2AC3: 74 09                                 JE BUILD_DATA_DONE
-[ 625]    2AC5: 8A 04                                 MOV AL, [SI]
-[ 626]    2AC7: E8 45 00                              CALL APPEND_HEX_BYTE
-[ 627]    2ACA: 46                                    INC SI
-[ 628]    2ACB: 49                                    DEC CX
-[ 629]    2ACC: EB F2                                 JMP BUILD_DATA_NEXT
-[ 630]    2ACE:                                       BUILD_DATA_DONE:
-[ 631]    2ACE: BE E1 26                              MOV SI, OFFSET crlf
-[ 632]    2AD1: B9 02 00                              MOV CX, 2
-[ 633]    2AD4: E8 20 00                              CALL APPEND_BYTES
-[ 634]    2AD7: BE D8 26                              MOV SI, OFFSET checksum_label
-[ 635]    2ADA: B9 09 00                              MOV CX, checksum_label_len
-[ 636]    2ADD: E8 17 00                              CALL APPEND_BYTES
-[ 637]    2AE0: BE 45 22                              MOV SI, OFFSET data_buf
-[ 638]    2AE3: 8B 0E 89 26                           MOV CX, data_length
-[ 639]    2AE7: E8 A4 FE                              CALL GENERATE_CHECKSUM
-[ 640]    2AEA: E8 51 00                              CALL APPEND_HEX_WORD
-[ 641]    2AED: BE E1 26                              MOV SI, OFFSET crlf
-[ 642]    2AF0: B9 02 00                              MOV CX, 2
-[ 643]    2AF3: E8 01 00                              CALL APPEND_BYTES
-[ 644]    2AF6: C3                                    RET
-[ 645]        :                                       
-[ 646]    2AF7:                                       APPEND_BYTES:
-[ 647]    2AF7: 50                                    PUSH AX
-[ 648]    2AF8: 53                                    PUSH BX
-[ 649]    2AF9: 56                                    PUSH SI
-[ 650]    2AFA: BF 45 12                              MOV DI, OFFSET response_buf
-[ 651]    2AFD: 03 3E 87 26                           ADD DI, response_length
-[ 652]    2B01: F3 A4                                 REP MOVSB
-[ 653]    2B03: 8B C7                                 MOV AX, DI
-[ 654]    2B05: 2D 45 12                              SUB AX, OFFSET response_buf
-[ 655]    2B08: A3 87 26                              MOV response_length, AX
-[ 656]    2B0B: 5E                                    POP SI
-[ 657]    2B0C: 5B                                    POP BX
-[ 658]    2B0D: 58                                    POP AX
-[ 659]    2B0E: C3                                    RET
-[ 660]        :                                       
-[ 661]    2B0F:                                       APPEND_HEX_BYTE:
-[ 662]    2B0F: 50                                    PUSH AX
-[ 663]    2B10: 8A E0                                 MOV AH, AL
-[ 664]    2B12: 24 F0                                 AND AL, 0F0h
-[ 665]    2B14: B1 04                                 MOV CL, 4
-[ 666]    2B16: D2 E8                                 SHR AL, CL
-[ 667]    2B18: E8 2E 00                              CALL NIBBLE_ASCII
-[ 668]    2B1B: BF 45 12                              MOV DI, OFFSET response_buf
-[ 669]    2B1E: 03 3E 87 26                           ADD DI, response_length
-[ 670]    2B22: 88 05                                 MOV [DI], AL
-[ 671]    2B24: FF 06 87 26                           INC response_length
-[ 672]    2B28: 8A C4                                 MOV AL, AH
-[ 673]    2B2A: 24 0F                                 AND AL, 0Fh
-[ 674]    2B2C: E8 1A 00                              CALL NIBBLE_ASCII
-[ 675]    2B2F: BF 45 12                              MOV DI, OFFSET response_buf
-[ 676]    2B32: 03 3E 87 26                           ADD DI, response_length
-[ 677]    2B36: 88 05                                 MOV [DI], AL
-[ 678]    2B38: FF 06 87 26                           INC response_length
-[ 679]    2B3C: 58                                    POP AX
-[ 680]    2B3D: C3                                    RET
-[ 681]        :                                       
-[ 682]    2B3E:                                       APPEND_HEX_WORD:
-[ 683]    2B3E: 50                                    PUSH AX
-[ 684]    2B3F: 8A C4                                 MOV AL, AH
-[ 685]    2B41: E8 CB FF                              CALL APPEND_HEX_BYTE
-[ 686]    2B44: 58                                    POP AX
-[ 687]    2B45: E8 C7 FF                              CALL APPEND_HEX_BYTE
-[ 688]    2B48: C3                                    RET
-[ 689]        :                                       
-[ 690]    2B49:                                       NIBBLE_ASCII:
-[ 691]    2B49: 3C 09                                 CMP AL, 9
-[ 692]    2B4B: 76 03                                 JBE NIBBLE_DIGIT
-[ 693]    2B4D: 04 37                                 ADD AL, 'A'-10
-[ 694]    2B4F: C3                                    RET
-[ 695]    2B50:                                       NIBBLE_DIGIT:
-[ 696]    2B50: 04 30                                 ADD AL, '0'
+[  69]    26FB: FC                                    CLD
+[  70]    26FC: 8C C8                                 MOV AX, CS
+[  71]    26FE: 8E D8                                 MOV DS, AX
+[  72]    2700: 8E C0                                 MOV ES, AX
+[  73]        :                                       
+[  74]    2702: E8 B3 00                              CALL PARSE_ARGUMENTS
+[  75]    2705: 73 03                                 JNC HAVE_ARGUMENTS
+[  76]    2707: E8 E0 00                              CALL USE_DEFAULT_ARGUMENTS
+[  77]    270A:                                       HAVE_ARGUMENTS:
+[  78]    270A: E8 26 01                              CALL READ_REQUEST
+[  79]    270D: 73 03 E9 9C 00                        JC EXIT_FILE_ERROR
+[  80]        :                                       
+[  81]    2712: E8 48 01                              CALL CLEAR_RESPONSE
+[  82]    2715: E8 4C 01                              CALL PARSE_PASSWORD
+[  83]    2718: 73 03 E9 82 00                        JC RESPONSE_INVALID
+[  84]        :                                       
+[  85]    271D: A0 45 02                              MOV AL, [request_buf]
+[  86]    2720: 3C 53                                 CMP AL, 'S'
+[  87]    2722: 74 12                                 JE COMMAND_SETUP
+[  88]    2724: 3C 56                                 CMP AL, 'V'
+[  89]    2726: 74 1E                                 JE COMMAND_VERIFY
+[  90]    2728: 3C 45                                 CMP AL, 'E'
+[  91]    272A: 74 33                                 JE COMMAND_ENCRYPT
+[  92]    272C: 3C 44                                 CMP AL, 'D'
+[  93]    272E: 74 45                                 JE COMMAND_DECRYPT
+[  94]    2730: 3C 43                                 CMP AL, 'C'
+[  95]    2732: 74 5C                                 JE COMMAND_CHECK
+[  96]    2734: EB 69                                 JMP RESPONSE_INVALID
+[  97]        :                                       
+[  98]    2736:                                       COMMAND_SETUP:
+[  99]    2736: E8 04 02                              CALL PASSWORD_CHECKSUM
+[ 100]    2739: A3 8D 26                              MOV stored_checksum, AX
+[ 101]    273C: E8 B4 02                              CALL SAVE_MASTER
+[ 102]    273F: 72 6D                                 JC EXIT_FILE_ERROR
+[ 103]    2741: E8 01 03                              CALL WRITE_SUCCESS_RESPONSE
+[ 104]    2744: EB 6D                                 JMP EXIT_OK
+[ 105]        :                                       
+[ 106]    2746:                                       COMMAND_VERIFY:
+[ 107]    2746: E8 F4 01                              CALL PASSWORD_CHECKSUM
+[ 108]    2749: A3 8F 26                              MOV current_checksum, AX
+[ 109]    274C: E8 CD 02                              CALL LOAD_MASTER
+[ 110]    274F: 72 53                                 JC EXIT_AUTH_ERROR
+[ 111]    2751: A1 8F 26                              MOV AX, current_checksum
+[ 112]    2754: 3B 06 8D 26                           CMP AX, stored_checksum
+[ 113]    2758: 75 4A                                 JNE EXIT_AUTH_ERROR
+[ 114]    275A: E8 E8 02                              CALL WRITE_SUCCESS_RESPONSE
+[ 115]    275D: EB 54                                 JMP EXIT_OK
+[ 116]        :                                       
+[ 117]    275F:                                       COMMAND_ENCRYPT:
+[ 118]    275F: E8 2B 01                              CALL LOAD_DATA
+[ 119]    2762: 72 3B                                 JC RESPONSE_INVALID
+[ 120]    2764: E8 D6 01                              CALL PASSWORD_CHECKSUM
+[ 121]    2767: E8 DE 01                              CALL TRANSFORM_KEY
+[ 122]    276A: E8 E0 01                              CALL ENCRYPT_BUFFER
+[ 123]    276D: E8 32 03                              CALL BUILD_DATA_RESPONSE
+[ 124]    2770: E8 07 03                              CALL WRITE_RESPONSE
+[ 125]    2773: EB 3E                                 JMP EXIT_OK
+[ 126]        :                                       
+[ 127]    2775:                                       COMMAND_DECRYPT:
+[ 128]    2775: E8 15 01                              CALL LOAD_DATA
+[ 129]    2778: 72 25                                 JC RESPONSE_INVALID
+[ 130]    277A: E8 C0 01                              CALL PASSWORD_CHECKSUM
+[ 131]    277D: E8 23 02                              CALL VERIFY_DATA_CHECKSUM
+[ 132]    2780: 72 27                                 JC EXIT_CHECK_ERROR
+[ 133]    2782: E8 C3 01                              CALL TRANSFORM_KEY
+[ 134]    2785: E8 E6 01                              CALL DECRYPT_BUFFER
+[ 135]    2788: E8 17 03                              CALL BUILD_DATA_RESPONSE
+[ 136]    278B: E8 EC 02                              CALL WRITE_RESPONSE
+[ 137]    278E: EB 23                                 JMP EXIT_OK
+[ 138]        :                                       
+[ 139]    2790:                                       COMMAND_CHECK:
+[ 140]    2790: E8 FA 00                              CALL LOAD_DATA
+[ 141]    2793: 72 0A                                 JC RESPONSE_INVALID
+[ 142]    2795: E8 0B 02                              CALL VERIFY_DATA_CHECKSUM
+[ 143]    2798: 72 0F                                 JC EXIT_CHECK_ERROR
+[ 144]    279A: E8 A8 02                              CALL WRITE_SUCCESS_RESPONSE
+[ 145]    279D: EB 14                                 JMP EXIT_OK
+[ 146]        :                                       
+[ 147]    279F:                                       RESPONSE_INVALID:
+[ 148]    279F: E8 C4 02                              CALL WRITE_STATUS_DATA_ERROR
+[ 149]    27A2: EB 0F                                 JMP EXIT_OK
+[ 150]        :                                       
+[ 151]    27A4:                                       EXIT_AUTH_ERROR:
+[ 152]    27A4: E8 A9 02                              CALL WRITE_STATUS_AUTH
+[ 153]    27A7: EB 0A                                 JMP EXIT_OK
+[ 154]        :                                       
+[ 155]    27A9:                                       EXIT_CHECK_ERROR:
+[ 156]    27A9: E8 AF 02                              CALL WRITE_STATUS_CHECK
+[ 157]    27AC: EB 05                                 JMP EXIT_OK
+[ 158]        :                                       
+[ 159]    27AE:                                       EXIT_FILE_ERROR:
+[ 160]    27AE: E8 C0 02                              CALL WRITE_STATUS_FILE
+[ 161]    27B1: EB 00                                 JMP EXIT_OK
+[ 162]        :                                       
+[ 163]    27B3:                                       EXIT_OK:
+[ 164]    27B3: B8 00 4C                              MOV AX, 4C00h
+[ 165]    27B6: CD 21                                 INT 21h
+[ 166]        :                                       
+[ 167]        :                                       ; Parse PSP command tail into request_path and response_path.
+[ 168]    27B8:                                       PARSE_ARGUMENTS:
+[ 169]    27B8: BE 81 00                              MOV SI, 81h
+[ 170]    27BB: 8A 0E 80 00                           MOV CL, [80h]
+[ 171]    27BF: 32 ED                                 XOR CH, CH
+[ 172]    27C1: 83 F9 01                              CMP CX, 1
+[ 173]    27C4: 72 22                                 JB PARSE_ARGUMENTS_FAIL
+[ 174]    27C6: E8 3F 00                              CALL SKIP_SPACES
+[ 175]    27C9: BF 03 01                              LEA DI, request_path
+[ 176]    27CC: E8 48 00                              CALL COPY_ARGUMENT
+[ 177]    27CF: E8 36 00                              CALL SKIP_SPACES
+[ 178]    27D2: BF 83 01                              LEA DI, response_path
+[ 179]    27D5: E8 3F 00                              CALL COPY_ARGUMENT
+[ 180]    27D8: 80 3E 03 01 00                        CMP BYTE PTR [request_path], 0
+[ 181]    27DD: 74 09                                 JE PARSE_ARGUMENTS_FAIL
+[ 182]    27DF: 80 3E 83 01 00                        CMP BYTE PTR [response_path], 0
+[ 183]    27E4: 74 02                                 JE PARSE_ARGUMENTS_FAIL
+[ 184]    27E6: F8                                    CLC
+[ 185]    27E7: C3                                    RET
+[ 186]    27E8:                                       PARSE_ARGUMENTS_FAIL:
+[ 187]    27E8: F9                                    STC
+[ 188]    27E9: C3                                    RET
+[ 189]        :                                       
+[ 190]    27EA:                                       USE_DEFAULT_ARGUMENTS:
+[ 191]    27EA: BE 16 02                              LEA SI, default_request_path
+[ 192]    27ED: BF 03 01                              LEA DI, request_path
+[ 193]    27F0: E8 0A 00                              CALL COPY_STRING
+[ 194]    27F3: BE 2D 02                              LEA SI, default_response_path
+[ 195]    27F6: BF 83 01                              LEA DI, response_path
+[ 196]    27F9: E8 01 00                              CALL COPY_STRING
+[ 197]    27FC: C3                                    RET
+[ 198]        :                                       
+[ 199]    27FD:                                       COPY_STRING:
+[ 200]    27FD: 8A 04                                 MOV AL, [SI]
+[ 201]    27FF: 88 05                                 MOV [DI], AL
+[ 202]    2801: 46                                    INC SI
+[ 203]    2802: 47                                    INC DI
+[ 204]    2803: 3C 00                                 CMP AL, 0
+[ 205]    2805: 75 F6                                 JNE COPY_STRING
+[ 206]    2807: C3                                    RET
+[ 207]        :                                       
+[ 208]    2808:                                       SKIP_SPACES:
+[ 209]    2808: 83 F9 00                              CMP CX, 0
+[ 210]    280B: 74 09                                 JE SKIP_SPACES_DONE
+[ 211]    280D: 80 3C 20                              CMP BYTE PTR [SI], ' '
+[ 212]    2810: 75 04                                 JNE SKIP_SPACES_DONE
+[ 213]    2812: 46                                    INC SI
+[ 214]    2813: 49                                    DEC CX
+[ 215]    2814: EB F2                                 JMP SKIP_SPACES
+[ 216]    2816:                                       SKIP_SPACES_DONE:
+[ 217]    2816: C3                                    RET
+[ 218]        :                                       
+[ 219]    2817:                                       COPY_ARGUMENT:
+[ 220]    2817: 83 F9 00                              CMP CX, 0
+[ 221]    281A: 74 13                                 JE COPY_ARGUMENT_DONE
+[ 222]    281C: 80 3C 20                              CMP BYTE PTR [SI], ' '
+[ 223]    281F: 74 0E                                 JE COPY_ARGUMENT_DONE
+[ 224]    2821: 80 3C 0D                              CMP BYTE PTR [SI], 13
+[ 225]    2824: 74 09                                 JE COPY_ARGUMENT_DONE
+[ 226]    2826: 8A 04                                 MOV AL, [SI]
+[ 227]    2828: 88 05                                 MOV [DI], AL
+[ 228]    282A: 46                                    INC SI
+[ 229]    282B: 47                                    INC DI
+[ 230]    282C: 49                                    DEC CX
+[ 231]    282D: EB E8                                 JMP COPY_ARGUMENT
+[ 232]    282F:                                       COPY_ARGUMENT_DONE:
+[ 233]    282F: C6 05 00                              MOV BYTE PTR [DI], 0
+[ 234]    2832: C3                                    RET
+[ 235]        :                                       
+[ 236]    2833:                                       READ_REQUEST:
+[ 237]    2833: BA 03 01                              MOV DX, OFFSET request_path
+[ 238]    2836: B8 00 3D                              MOV AX, 3D00h
+[ 239]    2839: CD 21                                 INT 21h
+[ 240]    283B: 72 1E                                 JC READ_REQUEST_FAIL
+[ 241]    283D: A3 91 26                              MOV request_handle, AX
+[ 242]    2840: 8B D8                                 MOV BX, AX
+[ 243]    2842: B9 FF 0F                              MOV CX, REQUEST_SIZE-1
+[ 244]    2845: BA 45 02                              MOV DX, OFFSET request_buf
+[ 245]    2848: B4 3F                                 MOV AH, 3Fh
+[ 246]    284A: CD 21                                 INT 21h
+[ 247]    284C: 72 09                                 JC READ_REQUEST_CLOSE_FAIL
+[ 248]    284E: A3 85 26                              MOV request_length, AX
+[ 249]    2851: B4 3E                                 MOV AH, 3Eh
+[ 250]    2853: CD 21                                 INT 21h
+[ 251]    2855: F8                                    CLC
+[ 252]    2856: C3                                    RET
+[ 253]    2857:                                       READ_REQUEST_CLOSE_FAIL:
+[ 254]    2857: B4 3E                                 MOV AH, 3Eh
+[ 255]    2859: CD 21                                 INT 21h
+[ 256]    285B:                                       READ_REQUEST_FAIL:
+[ 257]    285B: F9                                    STC
+[ 258]    285C: C3                                    RET
+[ 259]        :                                       
+[ 260]    285D:                                       CLEAR_RESPONSE:
+[ 261]    285D: C7 06 87 26 00 00                     MOV response_length, 0
+[ 262]    2863: C3                                    RET
+[ 263]        :                                       
+[ 264]        :                                       ; Locate PASSWORD= and decode the following hex bytes.
+[ 265]    2864:                                       PARSE_PASSWORD:
+[ 266]    2864: BE 45 02                              MOV SI, OFFSET request_buf
+[ 267]    2867: B9 00 10                              MOV CX, REQUEST_SIZE
+[ 268]    286A: BF E3 26                              LEA DI, password_field
+[ 269]    286D: BB 09 00                              MOV BX, 9
+[ 270]    2870: E8 43 00                              CALL FIND_FIELD
+[ 271]    2873: 72 16                                 JC PARSE_PASSWORD_FAIL
+[ 272]    2875: 8B F2                                 MOV SI, DX
+[ 273]    2877: BF 45 26                              LEA DI, password_buf
+[ 274]    287A: C7 06 95 26 40 00                     MOV decode_limit, 64
+[ 275]    2880: E8 62 00                              CALL DECODE_HEX_LINE
+[ 276]    2883: 72 06                                 JC PARSE_PASSWORD_FAIL
+[ 277]    2885: 89 1E 8B 26                           MOV password_length, BX
+[ 278]    2889: F8                                    CLC
+[ 279]    288A: C3                                    RET
+[ 280]    288B:                                       PARSE_PASSWORD_FAIL:
+[ 281]    288B: F9                                    STC
+[ 282]    288C: C3                                    RET
+[ 283]        :                                       
+[ 284]        :                                       ; Locate DATA= and decode the following hex bytes.
+[ 285]    288D:                                       LOAD_DATA:
+[ 286]    288D: BE 45 02                              MOV SI, OFFSET request_buf
+[ 287]    2890: B9 00 10                              MOV CX, REQUEST_SIZE
+[ 288]    2893: BF EC 26                              LEA DI, data_field
+[ 289]    2896: BB 05 00                              MOV BX, 5
+[ 290]    2899: E8 1A 00                              CALL FIND_FIELD
+[ 291]    289C: 72 16                                 JC LOAD_DATA_FAIL
+[ 292]    289E: 8B F2                                 MOV SI, DX
+[ 293]    28A0: BF 45 22                              LEA DI, data_buf
+[ 294]    28A3: C7 06 95 26 00 04                     MOV decode_limit, DATA_SIZE
+[ 295]    28A9: E8 39 00                              CALL DECODE_HEX_LINE
+[ 296]    28AC: 72 06                                 JC LOAD_DATA_FAIL
+[ 297]    28AE: 89 1E 89 26                           MOV data_length, BX
+[ 298]    28B2: F8                                    CLC
+[ 299]    28B3: C3                                    RET
+[ 300]    28B4:                                       LOAD_DATA_FAIL:
+[ 301]    28B4: F9                                    STC
+[ 302]    28B5: C3                                    RET
+[ 303]        :                                       
+[ 304]        :                                       ; Find a field and return DX at its value.
+[ 305]    28B6:                                       FIND_FIELD:
+[ 306]    28B6: 50                                    PUSH AX
+[ 307]    28B7: 53                                    PUSH BX
+[ 308]    28B8: 51                                    PUSH CX
+[ 309]    28B9: 56                                    PUSH SI
+[ 310]    28BA:                                       FIND_FIELD_NEXT:
+[ 311]    28BA: 83 F9 00                              CMP CX, 0
+[ 312]    28BD: 74 20                                 JE FIND_FIELD_NOT_FOUND
+[ 313]    28BF: 8A 04                                 MOV AL, [SI]
+[ 314]    28C1: 3A 05                                 CMP AL, [DI]
+[ 315]    28C3: 75 0C                                 JNE FIND_FIELD_ADVANCE
+[ 316]    28C5: 56                                    PUSH SI
+[ 317]    28C6: 57                                    PUSH DI
+[ 318]    28C7: 51                                    PUSH CX
+[ 319]    28C8: 8B CB                                 MOV CX, BX
+[ 320]    28CA: F3 A6                                 REPE CMPSB
+[ 321]    28CC: 59                                    POP CX
+[ 322]    28CD: 5F                                    POP DI
+[ 323]    28CE: 5E                                    POP SI
+[ 324]    28CF: 74 04                                 JE FIND_FIELD_FOUND
+[ 325]    28D1:                                       FIND_FIELD_ADVANCE:
+[ 326]    28D1: 46                                    INC SI
+[ 327]    28D2: 49                                    DEC CX
+[ 328]    28D3: EB E5                                 JMP FIND_FIELD_NEXT
+[ 329]    28D5:                                       FIND_FIELD_FOUND:
+[ 330]    28D5: 8B D6                                 MOV DX, SI
+[ 331]    28D7: 03 D3                                 ADD DX, BX
+[ 332]    28D9: 5E                                    POP SI
+[ 333]    28DA: 59                                    POP CX
+[ 334]    28DB: 5B                                    POP BX
+[ 335]    28DC: 58                                    POP AX
+[ 336]    28DD: F8                                    CLC
+[ 337]    28DE: C3                                    RET
+[ 338]    28DF:                                       FIND_FIELD_NOT_FOUND:
+[ 339]    28DF: 5E                                    POP SI
+[ 340]    28E0: 59                                    POP CX
+[ 341]    28E1: 5B                                    POP BX
+[ 342]    28E2: 58                                    POP AX
+[ 343]    28E3: F9                                    STC
+[ 344]    28E4: C3                                    RET
+[ 345]        :                                       
+[ 346]        :                                       ; Decode uppercase/lowercase hexadecimal until CR/LF.
+[ 347]        :                                       ; DS:SI source, DS:DI destination, returns BX byte count.
+[ 348]    28E5:                                       DECODE_HEX_LINE:
+[ 349]    28E5: 33 DB                                 XOR BX, BX
+[ 350]    28E7:                                       DECODE_NEXT:
+[ 351]    28E7: 8A 04                                 MOV AL, [SI]
+[ 352]    28E9: 3C 0D                                 CMP AL, 13
+[ 353]    28EB: 74 30                                 JE DECODE_DONE
+[ 354]    28ED: 3C 0A                                 CMP AL, 10
+[ 355]    28EF: 74 2C                                 JE DECODE_DONE
+[ 356]    28F1: 3C 00                                 CMP AL, 0
+[ 357]    28F3: 74 28                                 JE DECODE_DONE
+[ 358]    28F5: E8 29 00                              CALL HEX_VALUE
+[ 359]    28F8: 72 25                                 JC DECODE_FAIL
+[ 360]    28FA: 8A D0                                 MOV DL, AL
+[ 361]    28FC: 46                                    INC SI
+[ 362]    28FD: 8A 04                                 MOV AL, [SI]
+[ 363]    28FF: E8 1F 00                              CALL HEX_VALUE
+[ 364]    2902: 72 1B                                 JC DECODE_FAIL
+[ 365]    2904: 8A F0                                 MOV DH, AL
+[ 366]    2906: 3B 1E 95 26                           CMP BX, decode_limit
+[ 367]    290A: 73 13                                 JAE DECODE_FAIL
+[ 368]    290C: D0 E2                                 SHL DL, 1
+[ 369]    290E: D0 E2                                 SHL DL, 1
+[ 370]    2910: D0 E2                                 SHL DL, 1
+[ 371]    2912: D0 E2                                 SHL DL, 1
+[ 372]    2914: 0A D6                                 OR DL, DH
+[ 373]    2916: 88 15                                 MOV [DI], DL
+[ 374]    2918: 47                                    INC DI
+[ 375]    2919: 46                                    INC SI
+[ 376]    291A: 43                                    INC BX
+[ 377]    291B: EB CA                                 JMP DECODE_NEXT
+[ 378]    291D:                                       DECODE_DONE:
+[ 379]    291D: F8                                    CLC
+[ 380]    291E: C3                                    RET
+[ 381]    291F:                                       DECODE_FAIL:
+[ 382]    291F: F9                                    STC
+[ 383]    2920: C3                                    RET
+[ 384]        :                                       
+[ 385]    2921:                                       HEX_VALUE:
+[ 386]    2921: 3C 30                                 CMP AL, '0'
+[ 387]    2923: 72 16                                 JB HEX_FAIL
+[ 388]    2925: 3C 39                                 CMP AL, '9'
+[ 389]    2927: 76 0E                                 JBE HEX_DIGIT
+[ 390]    2929: 24 DF                                 AND AL, 0DFh
+[ 391]    292B: 3C 41                                 CMP AL, 'A'
+[ 392]    292D: 72 0C                                 JB HEX_FAIL
+[ 393]    292F: 3C 46                                 CMP AL, 'F'
+[ 394]    2931: 77 08                                 JA HEX_FAIL
+[ 395]    2933: 2C 37                                 SUB AL, 'A'-10
+[ 396]    2935: F8                                    CLC
+[ 397]    2936: C3                                    RET
+[ 398]    2937:                                       HEX_DIGIT:
+[ 399]    2937: 2C 30                                 SUB AL, '0'
+[ 400]    2939: F8                                    CLC
+[ 401]    293A: C3                                    RET
+[ 402]    293B:                                       HEX_FAIL:
+[ 403]    293B: F9                                    STC
+[ 404]    293C: C3                                    RET
+[ 405]        :                                       
+[ 406]    293D:                                       PASSWORD_CHECKSUM:
+[ 407]    293D: BE 45 26                              MOV SI, OFFSET password_buf
+[ 408]    2940: 8B 0E 8B 26                           MOV CX, password_length
+[ 409]    2944: E8 48 00                              CALL GENERATE_CHECKSUM
+[ 410]    2947: C3                                    RET
+[ 411]        :                                       
+[ 412]    2948:                                       TRANSFORM_KEY:
+[ 413]    2948: 8A D0                                 MOV DL, AL
+[ 414]    294A: 8A F4                                 MOV DH, AH
+[ 415]    294C: C3                                    RET
+[ 416]        :                                       
+[ 417]    294D:                                       ENCRYPT_BUFFER:
+[ 418]    294D: BE 45 22                              MOV SI, OFFSET data_buf
+[ 419]    2950: 8B 0E 89 26                           MOV CX, data_length
+[ 420]    2954:                                       ENCRYPT_NEXT:
+[ 421]    2954: 83 F9 00                              CMP CX, 0
+[ 422]    2957: 74 14                                 JE ENCRYPT_DONE
+[ 423]    2959: 8A 04                                 MOV AL, [SI]
+[ 424]    295B: 32 C2                                 XOR AL, DL
+[ 425]    295D: 02 C6                                 ADD AL, DH
+[ 426]    295F: D0 C0                                 ROL AL, 1
+[ 427]    2961: 88 04                                 MOV [SI], AL
+[ 428]    2963: 80 C2 11                              ADD DL, 17
+[ 429]    2966: 80 F6 A5                              XOR DH, 0A5h
+[ 430]    2969: 46                                    INC SI
+[ 431]    296A: 49                                    DEC CX
+[ 432]    296B: EB E7                                 JMP ENCRYPT_NEXT
+[ 433]    296D:                                       ENCRYPT_DONE:
+[ 434]    296D: C3                                    RET
+[ 435]        :                                       
+[ 436]    296E:                                       DECRYPT_BUFFER:
+[ 437]    296E: BE 45 22                              MOV SI, OFFSET data_buf
+[ 438]    2971: 8B 0E 89 26                           MOV CX, data_length
+[ 439]    2975:                                       DECRYPT_NEXT:
+[ 440]    2975: 83 F9 00                              CMP CX, 0
+[ 441]    2978: 74 14                                 JE DECRYPT_DONE
+[ 442]    297A: 8A 04                                 MOV AL, [SI]
+[ 443]    297C: D0 C8                                 ROR AL, 1
+[ 444]    297E: 2A C6                                 SUB AL, DH
+[ 445]    2980: 32 C2                                 XOR AL, DL
+[ 446]    2982: 88 04                                 MOV [SI], AL
+[ 447]    2984: 80 C2 11                              ADD DL, 17
+[ 448]    2987: 80 F6 A5                              XOR DH, 0A5h
+[ 449]    298A: 46                                    INC SI
+[ 450]    298B: 49                                    DEC CX
+[ 451]    298C: EB E7                                 JMP DECRYPT_NEXT
+[ 452]    298E:                                       DECRYPT_DONE:
+[ 453]    298E: C3                                    RET
+[ 454]        :                                       
+[ 455]    298F:                                       GENERATE_CHECKSUM:
+[ 456]    298F: 33 C0                                 XOR AX, AX
+[ 457]    2991:                                       CHECKSUM_NEXT:
+[ 458]    2991: 83 F9 00                              CMP CX, 0
+[ 459]    2994: 74 0C                                 JE CHECKSUM_DONE
+[ 460]    2996: 33 DB                                 XOR BX, BX
+[ 461]    2998: 8A 1C                                 MOV BL, [SI]
+[ 462]    299A: 03 C3                                 ADD AX, BX
+[ 463]    299C: D1 C0                                 ROL AX, 1
+[ 464]    299E: 46                                    INC SI
+[ 465]    299F: 49                                    DEC CX
+[ 466]    29A0: EB EF                                 JMP CHECKSUM_NEXT
+[ 467]    29A2:                                       CHECKSUM_DONE:
+[ 468]    29A2: C3                                    RET
+[ 469]        :                                       
+[ 470]    29A3:                                       VERIFY_DATA_CHECKSUM:
+[ 471]    29A3: BE 45 22                              MOV SI, OFFSET data_buf
+[ 472]    29A6: 8B 0E 89 26                           MOV CX, data_length
+[ 473]    29AA: E8 E2 FF                              CALL GENERATE_CHECKSUM
+[ 474]    29AD: A3 8F 26                              MOV current_checksum, AX
+[ 475]    29B0: BE 45 02                              MOV SI, OFFSET request_buf
+[ 476]    29B3: B9 00 10                              MOV CX, REQUEST_SIZE
+[ 477]    29B6: BF F1 26                              LEA DI, checksum_field
+[ 478]    29B9: BB 09 00                              MOV BX, 9
+[ 479]    29BC: E8 F7 FE                              CALL FIND_FIELD
+[ 480]    29BF: 72 0D                                 JC VERIFY_DATA_FAIL
+[ 481]    29C1: 8B F2                                 MOV SI, DX
+[ 482]    29C3: E8 0A 00                              CALL READ_HEX_WORD
+[ 483]    29C6: 3B 06 8F 26                           CMP AX, current_checksum
+[ 484]    29CA: 75 02                                 JNE VERIFY_DATA_FAIL
+[ 485]    29CC: F8                                    CLC
+[ 486]    29CD: C3                                    RET
+[ 487]    29CE:                                       VERIFY_DATA_FAIL:
+[ 488]    29CE: F9                                    STC
+[ 489]    29CF: C3                                    RET
+[ 490]        :                                       
+[ 491]    29D0:                                       READ_HEX_WORD:
+[ 492]    29D0: 33 DB                                 XOR BX, BX
+[ 493]    29D2: B9 04 00                              MOV CX, 4
+[ 494]    29D5:                                       READ_HEX_WORD_NEXT:
+[ 495]    29D5: D1 E3                                 SHL BX, 1
+[ 496]    29D7: D1 E3                                 SHL BX, 1
+[ 497]    29D9: D1 E3                                 SHL BX, 1
+[ 498]    29DB: D1 E3                                 SHL BX, 1
+[ 499]    29DD: 8A 04                                 MOV AL, [SI]
+[ 500]    29DF: E8 3F FF                              CALL HEX_VALUE
+[ 501]    29E2: 72 0B                                 JC READ_HEX_WORD_FAIL
+[ 502]    29E4: 32 E4                                 XOR AH, AH
+[ 503]    29E6: 0A D8                                 OR BL, AL
+[ 504]    29E8: 46                                    INC SI
+[ 505]    29E9: E2 EA                                 LOOP READ_HEX_WORD_NEXT
+[ 506]    29EB: 8B C3                                 MOV AX, BX
+[ 507]    29ED: F8                                    CLC
+[ 508]    29EE: C3                                    RET
+[ 509]    29EF:                                       READ_HEX_WORD_FAIL:
+[ 510]    29EF: 33 C0                                 XOR AX, AX
+[ 511]    29F1: F9                                    STC
+[ 512]    29F2: C3                                    RET
+[ 513]        :                                       
+[ 514]    29F3:                                       SAVE_MASTER:
+[ 515]    29F3: BA 03 02                              MOV DX, OFFSET master_path
+[ 516]    29F6: B9 00 00                              MOV CX, 0
+[ 517]    29F9: B4 3C                                 MOV AH, 3Ch
+[ 518]    29FB: CD 21                                 INT 21h
+[ 519]    29FD: 72 1B                                 JC SAVE_MASTER_FAIL
+[ 520]    29FF: 8B D8                                 MOV BX, AX
+[ 521]    2A01: A1 8D 26                              MOV AX, stored_checksum
+[ 522]    2A04: BA 8D 26                              MOV DX, OFFSET stored_checksum
+[ 523]    2A07: B9 02 00                              MOV CX, 2
+[ 524]    2A0A: B4 40                                 MOV AH, 40h
+[ 525]    2A0C: CD 21                                 INT 21h
+[ 526]    2A0E: 72 06                                 JC SAVE_MASTER_CLOSE_FAIL
+[ 527]    2A10: B4 3E                                 MOV AH, 3Eh
+[ 528]    2A12: CD 21                                 INT 21h
+[ 529]    2A14: F8                                    CLC
+[ 530]    2A15: C3                                    RET
+[ 531]    2A16:                                       SAVE_MASTER_CLOSE_FAIL:
+[ 532]    2A16: B4 3E                                 MOV AH, 3Eh
+[ 533]    2A18: CD 21                                 INT 21h
+[ 534]    2A1A:                                       SAVE_MASTER_FAIL:
+[ 535]    2A1A: F9                                    STC
+[ 536]    2A1B: C3                                    RET
+[ 537]        :                                       
+[ 538]    2A1C:                                       LOAD_MASTER:
+[ 539]    2A1C: BA 03 02                              MOV DX, OFFSET master_path
+[ 540]    2A1F: B8 00 3D                              MOV AX, 3D00h
+[ 541]    2A22: CD 21                                 INT 21h
+[ 542]    2A24: 72 1D                                 JC LOAD_MASTER_FAIL
+[ 543]    2A26: 8B D8                                 MOV BX, AX
+[ 544]    2A28: B9 02 00                              MOV CX, 2
+[ 545]    2A2B: BA 8D 26                              MOV DX, OFFSET stored_checksum
+[ 546]    2A2E: B4 3F                                 MOV AH, 3Fh
+[ 547]    2A30: CD 21                                 INT 21h
+[ 548]    2A32: 72 0B                                 JC LOAD_MASTER_CLOSE_FAIL
+[ 549]    2A34: 3D 02 00                              CMP AX, 2
+[ 550]    2A37: 75 06                                 JNE LOAD_MASTER_CLOSE_FAIL
+[ 551]    2A39: B4 3E                                 MOV AH, 3Eh
+[ 552]    2A3B: CD 21                                 INT 21h
+[ 553]    2A3D: F8                                    CLC
+[ 554]    2A3E: C3                                    RET
+[ 555]    2A3F:                                       LOAD_MASTER_CLOSE_FAIL:
+[ 556]    2A3F: B4 3E                                 MOV AH, 3Eh
+[ 557]    2A41: CD 21                                 INT 21h
+[ 558]    2A43:                                       LOAD_MASTER_FAIL:
+[ 559]    2A43: F9                                    STC
+[ 560]    2A44: C3                                    RET
+[ 561]        :                                       
+[ 562]    2A45:                                       WRITE_SUCCESS_RESPONSE:
+[ 563]    2A45: BE 97 26                              MOV SI, OFFSET status_text
+[ 564]    2A48: B9 0A 00                              MOV CX, status_text_len
+[ 565]    2A4B: E8 AA 00                              CALL APPEND_BYTES
+[ 566]    2A4E: EB 2A                                 JMP WRITE_RESPONSE
+[ 567]        :                                       
+[ 568]    2A50:                                       WRITE_STATUS_AUTH:
+[ 569]    2A50: BE AB 26                              MOV SI, OFFSET status_auth
+[ 570]    2A53: B9 0A 00                              MOV CX, status_auth_len
+[ 571]    2A56: E8 9F 00                              CALL APPEND_BYTES
+[ 572]    2A59: EB 1F                                 JMP WRITE_RESPONSE
+[ 573]        :                                       
+[ 574]    2A5B:                                       WRITE_STATUS_CHECK:
+[ 575]    2A5B: BE B5 26                              MOV SI, OFFSET status_check
+[ 576]    2A5E: B9 0A 00                              MOV CX, status_check_len
+[ 577]    2A61: E8 94 00                              CALL APPEND_BYTES
+[ 578]    2A64: EB 14                                 JMP WRITE_RESPONSE
+[ 579]        :                                       
+[ 580]    2A66:                                       WRITE_STATUS_DATA_ERROR:
+[ 581]    2A66: BE BF 26                              MOV SI, OFFSET status_data
+[ 582]    2A69: B9 0A 00                              MOV CX, status_data_len
+[ 583]    2A6C: E8 89 00                              CALL APPEND_BYTES
+[ 584]    2A6F: EB 09                                 JMP WRITE_RESPONSE
+[ 585]        :                                       
+[ 586]    2A71:                                       WRITE_STATUS_FILE:
+[ 587]    2A71: BE C9 26                              MOV SI, OFFSET status_file
+[ 588]    2A74: B9 0A 00                              MOV CX, status_file_len
+[ 589]    2A77: E8 7E 00                              CALL APPEND_BYTES
+[ 590]        :                                       
+[ 591]    2A7A:                                       WRITE_RESPONSE:
+[ 592]    2A7A: BA 83 01                              MOV DX, OFFSET response_path
+[ 593]    2A7D: B9 00 00                              MOV CX, 0
+[ 594]    2A80: B4 3C                                 MOV AH, 3Ch
+[ 595]    2A82: CD 21                                 INT 21h
+[ 596]    2A84: 72 1B                                 JC WRITE_RESPONSE_FAIL
+[ 597]    2A86: A3 93 26                              MOV response_handle, AX
+[ 598]    2A89: 8B D8                                 MOV BX, AX
+[ 599]    2A8B: 8B 0E 87 26                           MOV CX, response_length
+[ 600]    2A8F: BA 45 12                              MOV DX, OFFSET response_buf
+[ 601]    2A92: B4 40                                 MOV AH, 40h
+[ 602]    2A94: CD 21                                 INT 21h
+[ 603]    2A96: 72 05                                 JC WRITE_RESPONSE_CLOSE
+[ 604]    2A98: B4 3E                                 MOV AH, 3Eh
+[ 605]    2A9A: CD 21                                 INT 21h
+[ 606]    2A9C: C3                                    RET
+[ 607]    2A9D:                                       WRITE_RESPONSE_CLOSE:
+[ 608]    2A9D: B4 3E                                 MOV AH, 3Eh
+[ 609]    2A9F: CD 21                                 INT 21h
+[ 610]    2AA1:                                       WRITE_RESPONSE_FAIL:
+[ 611]    2AA1: C3                                    RET
+[ 612]        :                                       
+[ 613]    2AA2:                                       BUILD_DATA_RESPONSE:
+[ 614]    2AA2: C7 06 87 26 00 00                     MOV response_length, 0
+[ 615]    2AA8: BE 97 26                              MOV SI, OFFSET status_text
+[ 616]    2AAB: B9 0A 00                              MOV CX, status_text_len
+[ 617]    2AAE: E8 47 00                              CALL APPEND_BYTES
+[ 618]    2AB1: BE D3 26                              MOV SI, OFFSET data_label
+[ 619]    2AB4: B9 05 00                              MOV CX, data_label_len
+[ 620]    2AB7: E8 3E 00                              CALL APPEND_BYTES
+[ 621]    2ABA: BE 45 22                              MOV SI, OFFSET data_buf
+[ 622]    2ABD: 8B 0E 89 26                           MOV CX, data_length
+[ 623]    2AC1:                                       BUILD_DATA_NEXT:
+[ 624]    2AC1: 83 F9 00                              CMP CX, 0
+[ 625]    2AC4: 74 09                                 JE BUILD_DATA_DONE
+[ 626]    2AC6: 8A 04                                 MOV AL, [SI]
+[ 627]    2AC8: E8 45 00                              CALL APPEND_HEX_BYTE
+[ 628]    2ACB: 46                                    INC SI
+[ 629]    2ACC: 49                                    DEC CX
+[ 630]    2ACD: EB F2                                 JMP BUILD_DATA_NEXT
+[ 631]    2ACF:                                       BUILD_DATA_DONE:
+[ 632]    2ACF: BE E1 26                              MOV SI, OFFSET crlf
+[ 633]    2AD2: B9 02 00                              MOV CX, 2
+[ 634]    2AD5: E8 20 00                              CALL APPEND_BYTES
+[ 635]    2AD8: BE D8 26                              MOV SI, OFFSET checksum_label
+[ 636]    2ADB: B9 09 00                              MOV CX, checksum_label_len
+[ 637]    2ADE: E8 17 00                              CALL APPEND_BYTES
+[ 638]    2AE1: BE 45 22                              MOV SI, OFFSET data_buf
+[ 639]    2AE4: 8B 0E 89 26                           MOV CX, data_length
+[ 640]    2AE8: E8 A4 FE                              CALL GENERATE_CHECKSUM
+[ 641]    2AEB: E8 53 00                              CALL APPEND_HEX_WORD
+[ 642]    2AEE: BE E1 26                              MOV SI, OFFSET crlf
+[ 643]    2AF1: B9 02 00                              MOV CX, 2
+[ 644]    2AF4: E8 01 00                              CALL APPEND_BYTES
+[ 645]    2AF7: C3                                    RET
+[ 646]        :                                       
+[ 647]    2AF8:                                       APPEND_BYTES:
+[ 648]    2AF8: 50                                    PUSH AX
+[ 649]    2AF9: 53                                    PUSH BX
+[ 650]    2AFA: 56                                    PUSH SI
+[ 651]    2AFB: BF 45 12                              MOV DI, OFFSET response_buf
+[ 652]    2AFE: 03 3E 87 26                           ADD DI, response_length
+[ 653]    2B02: F3 A4                                 REP MOVSB
+[ 654]    2B04: 8B C7                                 MOV AX, DI
+[ 655]    2B06: 2D 45 12                              SUB AX, OFFSET response_buf
+[ 656]    2B09: A3 87 26                              MOV response_length, AX
+[ 657]    2B0C: 5E                                    POP SI
+[ 658]    2B0D: 5B                                    POP BX
+[ 659]    2B0E: 58                                    POP AX
+[ 660]    2B0F: C3                                    RET
+[ 661]        :                                       
+[ 662]    2B10:                                       APPEND_HEX_BYTE:
+[ 663]    2B10: 50                                    PUSH AX
+[ 664]    2B11: 51                                    PUSH CX
+[ 665]    2B12: 8A E0                                 MOV AH, AL
+[ 666]    2B14: 24 F0                                 AND AL, 0F0h
+[ 667]    2B16: B1 04                                 MOV CL, 4
+[ 668]    2B18: D2 E8                                 SHR AL, CL
+[ 669]    2B1A: E8 2F 00                              CALL NIBBLE_ASCII
+[ 670]    2B1D: BF 45 12                              MOV DI, OFFSET response_buf
+[ 671]    2B20: 03 3E 87 26                           ADD DI, response_length
+[ 672]    2B24: 88 05                                 MOV [DI], AL
+[ 673]    2B26: FF 06 87 26                           INC response_length
+[ 674]    2B2A: 8A C4                                 MOV AL, AH
+[ 675]    2B2C: 24 0F                                 AND AL, 0Fh
+[ 676]    2B2E: E8 1B 00                              CALL NIBBLE_ASCII
+[ 677]    2B31: BF 45 12                              MOV DI, OFFSET response_buf
+[ 678]    2B34: 03 3E 87 26                           ADD DI, response_length
+[ 679]    2B38: 88 05                                 MOV [DI], AL
+[ 680]    2B3A: FF 06 87 26                           INC response_length
+[ 681]    2B3E: 59                                    POP CX
+[ 682]    2B3F: 58                                    POP AX
+[ 683]    2B40: C3                                    RET
+[ 684]        :                                       
+[ 685]    2B41:                                       APPEND_HEX_WORD:
+[ 686]    2B41: 50                                    PUSH AX
+[ 687]    2B42: 8A C4                                 MOV AL, AH
+[ 688]    2B44: E8 C9 FF                              CALL APPEND_HEX_BYTE
+[ 689]    2B47: 58                                    POP AX
+[ 690]    2B48: E8 C5 FF                              CALL APPEND_HEX_BYTE
+[ 691]    2B4B: C3                                    RET
+[ 692]        :                                       
+[ 693]    2B4C:                                       NIBBLE_ASCII:
+[ 694]    2B4C: 3C 09                                 CMP AL, 9
+[ 695]    2B4E: 76 03                                 JBE NIBBLE_DIGIT
+[ 696]    2B50: 04 37                                 ADD AL, 'A'-10
 [ 697]    2B52: C3                                    RET
-[ 698]        :                                       
-[ 699]    2B53:                                       END_PROGRAM:
-[ 700]    2B53: E9 5C FC                              JMP EXIT_OK
+[ 698]    2B53:                                       NIBBLE_DIGIT:
+[ 699]    2B53: 04 30                                 ADD AL, '0'
+[ 700]    2B55: C3                                    RET
 [ 701]        :                                       
-[ 702]        :                                       
+[ 702]    2B56:                                       END_PROGRAM:
+[ 703]    2B56: E9 5A FC                              JMP EXIT_OK
+[ 704]        :                                       
+[ 705]        :                                       
  
 ===================================================================================================
  

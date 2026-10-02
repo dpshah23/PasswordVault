@@ -66,6 +66,7 @@ checksum_field DB 'CHECKSUM='
 master_missing DB 0
 
 MAIN:
+CLD
 MOV AX, CS
 MOV DS, AX
 MOV ES, AX
@@ -660,6 +661,7 @@ RET
 
 APPEND_HEX_BYTE:
 PUSH AX
+PUSH CX
 MOV AH, AL
 AND AL, 0F0h
 MOV CL, 4
@@ -676,6 +678,7 @@ MOV DI, OFFSET response_buf
 ADD DI, response_length
 MOV [DI], AL
 INC response_length
+POP CX
 POP AX
 RET
 

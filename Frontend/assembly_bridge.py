@@ -59,6 +59,7 @@ BACKEND_DEFAULT = BACKEND_DIR / "securevault.com"
 
 # Possible Assembly backend executables
 BACKEND_CANDIDATES = (
+    BACKEND_DIR / "SV.com",
     BACKEND_DIR / "securevault.com",
     BACKEND_DIR / "securevault.exe",
 )
@@ -447,10 +448,11 @@ class AssemblyBridge:
         # Assembly command
         # ----------------------------------------------------
 
-        # DOSBox exposes long Windows filenames through an 8.3 alias.
-        # The mounted project currently exposes securevault.com as SECURE~7.COM.
+        executable_name = Path(relative_backend).name
+        if len(Path(executable_name).stem) > 8:
+            executable_name = "SECURE~7.COM"
         assembly_command = (
-            f"SECURE~7.COM "
+            f"{executable_name} "
             f"{request_dos_path} "
             f"{response_dos_path}"
         )
