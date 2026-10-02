@@ -1,4 +1,4 @@
-encrypt
+ENCRYPT
 password=313233343536
 DATA=41
 checksum=0000
