@@ -68,9 +68,15 @@ def _load_plaintext():
     envelope = _read_envelope()
     if envelope is None:
         if LEGACY_FILE.exists():
-            raise VaultCorruptError(
-                "A plaintext vault exists. Export or remove it before creating an encrypted vault."
-            )
+            try:
+                legacy_records = json.loads(LEGACY_FILE.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as error:
+                raise VaultCorruptError("The legacy vault file is not valid.") from error
+            if legacy_records == {}:
+                return []
+            if isinstance(legacy_records, list):
+                return legacy_records
+            raise VaultCorruptError("The legacy vault must contain a list.")
         return []
 
     try:
@@ -103,6 +109,7 @@ def _save_plaintext(records):
 def setup_master_password(password, confirmation):
     if not password or password != confirmation:
         return False
+    initialize_vault()
     bridge.setup_master_password(password)
     return True
 

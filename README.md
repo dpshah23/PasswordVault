@@ -23,18 +23,20 @@ checksum. CRUD operations are unavailable while the vault is locked.
 ## Setup
 
 1. Install the dependency with `pip install -r requirements.txt`.
-2. Open `Backend/securevault.asm` in EMU8086 and build it as a DOS `.COM`
-   program. It is the executable entry point; `Encryption.asm` is a reusable
-   demonstration module, while `assembly_interface.asm` documents the protocol.
-3. Place the resulting executable at `Backend/securevault.com`, or set
-   `SECUREVAULT_ASSEMBLY_EXE` to its path.
-4. Run `python Frontend/main.py`.
+2. Ensure DOSBox is installed and `Backend/securevault.com` is the executable
+   built from `Backend/securevault.asm`. Rebuild it in EMU8086 after changing
+   the assembly source.
+3. Run `python Frontend/main.py` from the project root.
 
-If Windows cannot launch the DOS `.COM` file directly, set
-`SECUREVAULT_RUNNER` to a small DOS-compatible launcher command and keep the
-same two request/response path arguments. The Assembly program accepts those
-paths and implements the protocol described in `Backend/assembly_interface.asm`.
-Python does not fall back to Python cryptography when the executable is missing.
+The bridge mounts the project root as `C:`, mounts a temporary request/response
+directory as `D:`, and runs `C:\Backend\securevault.com D:\request.txt
+D:\response.txt`. It reads the response file rather than DOSBox stdout.
+For a custom launcher, set `SECUREVAULT_RUNNER` to a command template using
+`{exe}`, `{request}`, and `{response}` placeholders.
+
+The first setup creates `data/master.dat` through the Assembly backend. The
+existing empty `data/vault.json` is retained for compatibility; a non-empty
+legacy list is loaded once and then saved to the encrypted vault format.
 
 ## Algorithm and limitations
 

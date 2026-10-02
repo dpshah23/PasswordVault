@@ -92,7 +92,7 @@ class LoginWindow(QWidget):
                 authenticate(password)
             else:
                 authenticate(password)
-        except AssemblyBackendError as error:
+        except Exception as error:
             QMessageBox.critical(self, "Vault Error", str(error))
             return
 

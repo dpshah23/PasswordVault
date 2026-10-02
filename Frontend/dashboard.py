@@ -407,10 +407,7 @@ class Dashboard(QWidget):
         success = delete_credential(credential_id)
 
         if success:
-
-            self.load_credentials(
-                get_credentials()
-            )
+            self.search_credentials(self.search_box.text())
 
             QMessageBox.information(
                 self,

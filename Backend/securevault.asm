@@ -25,7 +25,7 @@ DATA_SIZE EQU 1024
 
 request_path DB 128 DUP(0)
 response_path DB 128 DUP(0)
-master_path DB '..\data\vault.dat',0
+master_path DB '..\data\master.dat',0
 default_request_path DB '..\backend\REQUEST.txt',0
 default_response_path DB '..\backend\RESPONSE.txt',0
 request_buf DB REQUEST_SIZE DUP(0)
@@ -40,6 +40,7 @@ stored_checksum DW 0
 current_checksum DW 0
 request_handle DW 0
 response_handle DW 0
+decode_limit DW DATA_SIZE
 
 status_text DB 'STATUS=0',13,10
 status_text_len EQU $-status_text
@@ -269,6 +270,7 @@ PARSE_PASSWORD:
     JC PARSE_PASSWORD_FAIL
     MOV SI, DX
     LEA DI, password_buf
+    MOV decode_limit, 64
     CALL DECODE_HEX_LINE
     JC PARSE_PASSWORD_FAIL
     MOV password_length, BX
@@ -288,6 +290,7 @@ LOAD_DATA:
     JC LOAD_DATA_FAIL
     MOV SI, DX
     LEA DI, data_buf
+    MOV decode_limit, DATA_SIZE
     CALL DECODE_HEX_LINE
     JC LOAD_DATA_FAIL
     MOV data_length, BX
@@ -359,6 +362,8 @@ DECODE_NEXT:
     CALL HEX_VALUE
     JC DECODE_FAIL
     MOV DH, AL
+    CMP BX, decode_limit
+    JAE DECODE_FAIL
     SHL DL, 1
     SHL DL, 1
     SHL DL, 1
@@ -368,8 +373,6 @@ DECODE_NEXT:
     INC DI
     INC SI
     INC BX
-    CMP BX, DATA_SIZE
-    JAE DECODE_FAIL
     JMP DECODE_NEXT
 DECODE_DONE:
     CLC
@@ -657,6 +660,7 @@ APPEND_BYTES:
 
 APPEND_HEX_BYTE:
     PUSH AX
+    PUSH CX
     MOV AH, AL
     AND AL, 0F0h
     MOV CL, 4
@@ -673,6 +677,7 @@ APPEND_HEX_BYTE:
     ADD DI, response_length
     MOV [DI], AL
     INC response_length
+    POP CX
     POP AX
     RET
 

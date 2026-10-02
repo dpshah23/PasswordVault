@@ -178,16 +178,20 @@ class AddCredentialWindow(QWidget):
         import secrets
         import string
 
-        characters = (
-            string.ascii_letters
-            + string.digits
-            + "!@#$%^&*"
+        groups = (
+            string.ascii_uppercase,
+            string.ascii_lowercase,
+            string.digits,
+            "!@#$%^&*",
         )
-
-        password = "".join(
+        characters = "".join(groups)
+        password_parts = [secrets.choice(group) for group in groups]
+        password_parts.extend(
             secrets.choice(characters)
-            for _ in range(16)
+            for _ in range(12)
         )
+        secrets.SystemRandom().shuffle(password_parts)
+        password = "".join(password_parts)
 
         self.password_input.setText(
             password

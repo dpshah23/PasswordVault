@@ -447,11 +447,38 @@ class AssemblyBridge:
         # Assembly command
         # ----------------------------------------------------
 
+        # DOSBox exposes long Windows filenames through an 8.3 alias.
+        # The mounted project currently exposes securevault.com as SECURE~7.COM.
         assembly_command = (
-            f"{Path(relative_backend).name} "
+            f"SECURE~7.COM "
             f"{request_dos_path} "
             f"{response_dos_path}"
         )
+
+        # ----------------------------------------------------
+        # Optional custom runner
+        # ----------------------------------------------------
+
+        if self.runner:
+            runner = shlex.split(self.runner, posix=False)
+            replacements = {
+                "{exe}": str(self.executable),
+                "{request}": str(request_path),
+                "{response}": str(response_path),
+                "{project}": str(project_directory),
+                "{temp}": str(temporary_directory),
+            }
+            return [
+                next(
+                    (
+                        argument.replace(token, value)
+                        for token, value in replacements.items()
+                        if token in argument
+                    ),
+                    argument,
+                )
+                for argument in runner
+            ]
 
         # ----------------------------------------------------
         # DOSBox execution
