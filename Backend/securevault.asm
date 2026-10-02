@@ -25,9 +25,9 @@ DATA_SIZE EQU 1024
 
 request_path DB 128 DUP(0)
 response_path DB 128 DUP(0)
-master_path DB '../data\master.dat',0
-default_request_path DB 'd:\request.txt',0
-default_response_path DB 'd:\response.txt',0
+master_path DB '..\data\vault.dat',0
+default_request_path DB '..\backend\REQUEST.txt',0
+default_response_path DB '..\backend\RESPONSE.txt',0
 request_buf DB REQUEST_SIZE DUP(0)
 response_buf DB RESPONSE_SIZE DUP(0)
 data_buf DB DATA_SIZE DUP(0)

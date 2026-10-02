@@ -448,49 +448,10 @@ class AssemblyBridge:
         # ----------------------------------------------------
 
         assembly_command = (
-            f"C:\\{backend_dos_path} "
+            f"{Path(relative_backend).name} "
             f"{request_dos_path} "
             f"{response_dos_path}"
         )
-
-        # ----------------------------------------------------
-        # DOSBox configuration
-        # ----------------------------------------------------
-
-        config_path = (
-            temporary_directory / "dosbox.conf"
-        )
-
-        config = "\n".join(
-            [
-                "[autoexec]",
-
-                # Project root -> C:
-                f'mount c "{project_directory}"',
-
-                # Temporary request/response -> D:
-                f'mount d "{temporary_directory}"',
-
-                # Go to project root
-                "c:",
-
-                # Execute Assembly
-                assembly_command,
-
-                # Exit DOSBox
-                "exit",
-
-                "",
-            ]
-        )
-
-        config_path.write_text(
-            config,
-            encoding="ascii",
-        )
-
-        print("\nGenerated DOSBox config:")
-        print(config)
 
         # ----------------------------------------------------
         # DOSBox execution
@@ -499,8 +460,18 @@ class AssemblyBridge:
         return [
             self.dosbox,
             "-exit",
-            "-conf",
-            str(config_path),
+            "-c",
+            f'mount c "{project_directory}"',
+            "-c",
+            f'mount d "{temporary_directory}"',
+            "-c",
+            "c:",
+            "-c",
+            "cd Backend",
+            "-c",
+            assembly_command,
+            "-c",
+            "exit",
         ]
 
     # ========================================================
