@@ -6,6 +6,24 @@ import vault
 from assembly_bridge import AssemblyBridge
 
 
+class AssemblySourceTests(unittest.TestCase):
+    def test_decrypt_preserves_password_checksum_during_data_verification(self):
+        source = (
+            Path(__file__).resolve().parent.parent
+            / "Backend"
+            / "securevault.asm"
+        ).read_text(encoding="utf-8")
+        decrypt_block = source.split("COMMAND_DECRYPT:", 1)[1].split(
+            "COMMAND_CHECK:",
+            1,
+        )[0]
+        self.assertIn(
+            "CALL PASSWORD_CHECKSUM\n    PUSH AX\n"
+            "    CALL VERIFY_DATA_CHECKSUM\n    POP AX",
+            decrypt_block,
+        )
+
+
 class FakeAssemblyBridge:
     def __init__(self):
         self.configured = True

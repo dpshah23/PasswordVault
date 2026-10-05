@@ -25,7 +25,8 @@ checksum. CRUD operations are unavailable while the vault is locked.
 1. Install the dependency with `pip install -r requirements.txt`.
 2. Ensure DOSBox is installed and `Backend/securevault.com` is the executable
    built from `Backend/securevault.asm`. Rebuild it in EMU8086 after changing
-   the assembly source.
+   the assembly source. The bridge prefers this rebuilt executable; `SV.com`
+   is retained only as a legacy fallback.
 3. Run `python Frontend/main.py` from the project root.
 
 The bridge mounts the project root as `C:`, mounts a temporary request/response

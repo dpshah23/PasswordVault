@@ -59,8 +59,8 @@ BACKEND_DEFAULT = BACKEND_DIR / "securevault.com"
 
 # Possible Assembly backend executables
 BACKEND_CANDIDATES = (
-    BACKEND_DIR / "SV.com",
     BACKEND_DIR / "securevault.com",
+    BACKEND_DIR / "SV.com",
     BACKEND_DIR / "securevault.exe",
 )
 
