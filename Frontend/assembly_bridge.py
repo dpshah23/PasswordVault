@@ -53,14 +53,14 @@ BACKEND_DIR = BASE_DIR / "Backend"
 # Password Vault/data/
 DATA_DIR = BASE_DIR / "data"
 
-# Main Assembly backend
-BACKEND_DEFAULT = BACKEND_DIR / "securevault.com"
+# Main Assembly backend.
+BACKEND_DEFAULT = BACKEND_DIR / "SV.com"
 
 
 # Possible Assembly backend executables
 BACKEND_CANDIDATES = (
-    BACKEND_DIR / "securevault.com",
     BACKEND_DIR / "SV.com",
+    BACKEND_DIR / "securevault.com",
     BACKEND_DIR / "securevault.exe",
 )
 
@@ -448,9 +448,10 @@ class AssemblyBridge:
         # Assembly command
         # ----------------------------------------------------
 
+        # DOSBox's mounted filesystem accepts the long filename here. Do not
+        # invent an 8.3 alias: Windows may assign a different short name
+        # depending on the files already present in the directory.
         executable_name = Path(relative_backend).name
-        if len(Path(executable_name).stem) > 8:
-            executable_name = "SECURE~7.COM"
         assembly_command = (
             f"{executable_name} "
             f"{request_dos_path} "
