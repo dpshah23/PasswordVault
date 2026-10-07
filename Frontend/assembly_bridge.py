@@ -53,14 +53,15 @@ BACKEND_DIR = BASE_DIR / "Backend"
 # Password Vault/data/
 DATA_DIR = BASE_DIR / "data"
 
-# Main Assembly backend.
-BACKEND_DEFAULT = BACKEND_DIR / "SV.com"
+# Main Assembly backend. The short filename is required by DOSBox 0.74.
+BACKEND_DEFAULT = BACKEND_DIR / "SVFIX.COM"
 
 
 # Possible Assembly backend executables
 BACKEND_CANDIDATES = (
-    BACKEND_DIR / "SV.com",
+    BACKEND_DIR / "SVFIX.COM",
     BACKEND_DIR / "securevault.com",
+    BACKEND_DIR / "SV.com",
     BACKEND_DIR / "securevault.exe",
 )
 
