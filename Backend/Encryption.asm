@@ -1,14 +1,6 @@
-
-; SecureVault educational byte transformation routines.
-; EMU8086-compatible 16-bit COM source.
-; This is reversible educational processing, not production cryptography.
-                                                             
 ORG 100h
 
 JMP START
-
-; ENCRYPT_BUFFER and DECRYPT_BUFFER input:
-;   DS:SI -> buffer, CX -> byte count, DL -> key byte, DH -> seed byte.
 
 ENCRYPT_BUFFER:
 	PUSH AX

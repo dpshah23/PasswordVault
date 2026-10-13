@@ -1,36 +1,3 @@
-"""
-SecureVault - Python <-> 8086 Assembly Bridge
-
-Project structure:
-
-Password Vault/
-├── Backend/
-│   └── securevault.com
-├── Frontend/
-│   └── assembly_bridge.py
-└── data/
-    └── master.dat
-
-The Assembly backend is executed through DOSBox.
-
-Communication:
-
-Python
-    |
-    | request.txt
-    v
-DOSBox
-    |
-    | securevault.com
-    v
-response.txt
-    |
-    v
-Python
-
-The bridge does NOT perform encryption itself.
-All encryption/decryption is delegated to the Assembly backend.
-"""
 
 import os
 import shlex

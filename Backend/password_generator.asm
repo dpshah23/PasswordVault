@@ -1,8 +1,3 @@
-; SecureVault educational 8086 password-generation routine.
-; Input: BX requested length (maximum 32), DL initial seed.
-; Output: DS:DI receives uppercase letters, lowercase letters, digits,
-;         and symbols selected by a deterministic educational sequence.
-; This routine is not cryptographically secure.
 
 GENERATE_PASSWORD_MODULE:
     CMP BX, 0

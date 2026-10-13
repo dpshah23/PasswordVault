@@ -1,20 +1,3 @@
-; SecureVault bridge backend for EMU8086.
-; Build this file as a DOS .COM program named securevault.com.
-;
-; Usage from the bridge:
-;   securevault.com request.txt response.txt
-;
-; The request file contains:
-;   COMMAND\r\n
-;   PASSWORD=hex bytes\r\n
-;   DATA=hex bytes\r\n
-;   CHECKSUM=4 hex digits\r\n
-;
-; The response file contains STATUS, DATA, and CHECKSUM lines.
-; Status: 0 success, 1 invalid request, 2 authentication failure,
-;         3 checksum failure, 4 malformed data, 5 file error.
-;
-; This is an educational reversible cipher, not production cryptography.
 
 ORG 100h
 JMP MAIN

@@ -1,6 +1,4 @@
-; SecureVault educational checksum module.
-; Input: DS:SI bytes, CX byte count.
-; Output: AX 16-bit rotating additive checksum.
+
 
 GENERATE_CHECKSUM_MODULE:
     XOR AX, AX

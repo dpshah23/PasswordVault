@@ -1,7 +1,3 @@
-; SecureVault educational decryption module.
-; The same routine is embedded in securevault.asm for the bridge build.
-; Input: DS:SI buffer, CX byte count, DL key byte, DH seed byte.
-
 DECRYPT_BUFFER_MODULE:
     CMP CX, 0
     JE DECRYPT_MODULE_DONE
